@@ -1,0 +1,138 @@
+name: Weekly Dependency Updates
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9 AM UTC
+  workflow_dispatch: # Enables the "Run workflow" button in GitHub
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # The lowest supported version, which is the one most likely to catch
+        # an incompatibility. The pull request this opens runs the full matrix.
+        python-version: [3.12]
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Update dependencies
+        run: uv lock --upgrade
+
+      - name: Check for dependency changes
+        id: check_changes
+        run: |
+          if git diff --quiet uv.lock; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        if: steps.check_changes.outputs.changed == 'true'
+        run: uv sync
+
+      # The same checks CI runs, in the same order. A dependency bump can break
+      # formatting or typing as easily as it breaks a test -- ruff and mypy are
+      # themselves dependencies here.
+      - name: Format
+        if: steps.check_changes.outputs.changed == 'true'
+        run: uv run ruff format --diff
+
+      - name: Lint
+        if: steps.check_changes.outputs.changed == 'true'
+        run: uv run ruff check
+
+      - name: Types
+        if: steps.check_changes.outputs.changed == 'true'
+        run: uv run mypy src
+
+      - name: Run tests
+        if: steps.check_changes.outputs.changed == 'true'
+        run: uv run pytest
+
+      - name: Bump patch version
+        id: bump_version
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          NEW_VERSION=$(python3 -c "
+          import re
+          with open('pyproject.toml') as f:
+              content = f.read()
+          m = re.search(r'version = \"(\d+)\.(\d+)\.(\d+)\"', content)
+          major, minor, patch = m.groups()
+          print(f'{major}.{minor}.{int(patch) + 1}')
+          ")
+          sed -i "s/^version = \"[0-9]*\.[0-9]*\.[0-9]*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Sync lockfile with bumped version
+        if: steps.check_changes.outputs.changed == 'true'
+        run: uv lock
+
+      - name: Create Pull Request
+        id: create_pr
+        if: steps.check_changes.outputs.changed == 'true' && success()
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: dependency-updates
+          base: main
+          title: 'Weekly dependency updates (${{ steps.bump_version.outputs.new_version }})'
+          body: |
+            Weekly automated dependency updates.
+
+            - Updated `uv.lock` via `uv lock --upgrade`
+            - Bumped patch version to `${{ steps.bump_version.outputs.new_version }}`
+
+            Publishing happens on release, so merging this prepares the next
+            version rather than releasing it.
+
+            Note this updates the Python dependencies only. The vendored LC
+            stylesheets track upstream separately, via `./scripts/vendor.py`.
+          commit-message: 'Update dependencies and bump patch version to ${{ steps.bump_version.outputs.new_version }}'
+          labels: dependencies
+
+      # Skipped rather than failed when no webhook is configured.
+      - name: Notify Slack
+        if: steps.check_changes.outputs.changed == 'true' && success()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          PR_URL: ${{ steps.create_pr.outputs.pull-request-url }}
+          NEW_VERSION: ${{ steps.bump_version.outputs.new_version }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "No SLACK_WEBHOOK_URL configured, skipping."
+            exit 0
+          fi
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\": \"$REPO_NAME dependency update PR opened: <$PR_URL|v$NEW_VERSION>\"}" \
+            "$SLACK_WEBHOOK_URL"
+
+      - name: Notify Slack on failure
+        if: steps.check_changes.outputs.changed == 'true' && failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "No SLACK_WEBHOOK_URL configured, skipping."
+            exit 0
+          fi
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\": \"$REPO_NAME dependency update failed: <$RUN_URL|view run>\"}" \
+            "$SLACK_WEBHOOK_URL"

@@ -4,7 +4,7 @@ Convert MARC records to BIBFRAME RDF in Python, using the Library of Congress
 [marc2bibframe2](https://github.com/lcnetdev/marc2bibframe2) XSLT.
 
 The stylesheet is vendored in this package, so there is nothing to install
-alongside it and no Java or Saxon involved — just `lxml`, `pymarc` and
+alongside it and no Java or Saxon involved, just `lxml`, `pymarc` and
 `rdflib`.
 
 ## Install
@@ -14,6 +14,8 @@ pip install marc-bibframe
 ```
 
 ## Command line
+
+You can use it from the command line:
 
 ```
 $ marc-bibframe record.mrc
@@ -33,6 +35,8 @@ available as flags.
 
 ## Use as a library
 
+Or you can use it as a function in your own Python programs:
+
 ```python
 from marc_bibframe import marc_to_graph
 
@@ -43,7 +47,7 @@ print(graph.serialize(format="turtle"))
 ```
 
 MARCXML is accepted directly, and RDF/XML is available if you would rather not
-pay for a parse into rdflib:
+pay for a parse into an rdflib.Graph:
 
 ```python
 from marc_bibframe import marc_to_marcxml, marcxml_to_graph, marcxml_to_rdfxml
@@ -72,8 +76,8 @@ https://example.edu/catalog/99123456#Topic650-5
 
 These are **not** authority URIs. They are scoped to the record they came
 from, so two records describing the same person produce two different agent
-URIs. If you need them reconciled against an authority — LC, Wikidata, your
-own store — that happens after this library hands you the graph.
+URIs. If you need them reconciled against an authority (LC, Wikidata, your
+own store) that happens after this library hands you the graph.
 
 For the same reason the default `baseuri` is `http://example.org/`, matching
 the stylesheet's own. Pick something under your control, and prefer a

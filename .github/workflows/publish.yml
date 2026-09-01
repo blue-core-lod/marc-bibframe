@@ -1,0 +1,46 @@
+name: Publish to PyPI
+
+# Requires this repo to be registered as a trusted publisher on PyPI, so no
+# API token is needed: https://docs.pypi.org/trusted-publishers/
+
+on:
+  release:
+    types:
+      published
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/marc-bibframe
+
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      # Don't publish something that doesn't pass its own tests.
+      - name: Check
+        run: |
+          uv run ruff format --diff
+          uv run ruff check
+          uv run mypy src
+          uv run pytest
+
+      # The vendored stylesheets are the whole point of the package, so make
+      # sure a release ships upstream-plus-patches and not a hand-edited tree.
+      - name: Vendored stylesheets match upstream plus patches
+        run: |
+          uv run ./scripts/vendor.py "$(grep '^tag:' src/marc_bibframe/xsl/UPSTREAM | cut -d' ' -f2)"
+          git diff --exit-code -- src/marc_bibframe/xsl
+
+      - name: Publish
+        run: |
+          uv build
+          uv publish
