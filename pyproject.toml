@@ -1,6 +1,6 @@
 [project]
 name = "marc-bibframe"
-version = "0.2.0"
+version = "0.2.1"
 description = "Convert MARC records to BIBFRAME RDF using the Library of Congress marc2bibframe2 XSLT"
 readme = "README.md"
 requires-python = ">=3.12"
