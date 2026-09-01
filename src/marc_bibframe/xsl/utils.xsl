@@ -93,7 +93,8 @@
         </xsl:variable>
         <xsl:choose>
           <xsl:when test="$vLang = 'en' and $vScript != '' and $vScript != 'latn'"><xsl:value-of select="concat('und-',$vScript)"/></xsl:when>
-          <xsl:when test="$bcp47inferrence and 
+          <xsl:when test="$bcp47inferrence and
+                          $vScript != '' and
                           $code-to-script-map/code-to-script-map/entry[@key=$vLang] and
                           $code-to-script-map/code-to-script-map/entry[@key=$vLang]/value != $vScript">
             <xsl:value-of select="concat($vLang,'-',$vScript)"/>

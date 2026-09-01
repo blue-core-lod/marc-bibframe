@@ -1,0 +1,1 @@
+00245nam a2200085 a 450000100090000000800410000910000300005024500580008065000210013899123456860506s1870    fr            000 1 fre d1 aVerne, Jules,d1828-1905.10aTwenty thousand leagues under the sea /cJules Verne. 0aScience fiction.

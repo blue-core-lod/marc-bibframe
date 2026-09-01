@@ -1,0 +1,46 @@
+[project]
+name = "marc-bibframe"
+version = "0.1.0"
+description = "Convert MARC records to BIBFRAME RDF using the Library of Congress marc2bibframe2 XSLT"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+keywords = ["marc", "bibframe", "marcxml", "rdf", "marc2bibframe2", "libraries"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Markup :: XML",
+]
+dependencies = [
+    "lxml>=6.0.2",
+    "pymarc>=5.2.0",
+    "rdflib>=7.1.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/blue-core-lod/marc-bibframe"
+Issues = "https://github.com/blue-core-lod/marc-bibframe/issues"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.16.1",
+    "pytest>=8.3.4",
+    "ruff>=0.9.6",
+    "lxml-stubs>=0.5.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/marc_bibframe"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "-v"
+
+[tool.mypy]
+ignore_missing_imports = true

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<collection xmlns="http://www.loc.gov/MARC21/slim">
+  <record>
+    <leader>01234nam a2200289 a 4500</leader>
+    <controlfield tag="001">ru-no-script</controlfield>
+    <controlfield tag="008">860506s1957    nyu           000 0 rus d</controlfield>
+    <datafield tag="245" ind1="1" ind2="0">
+      <subfield code="6">880-01/XYZ</subfield>
+      <subfield code="a">Voina i mir</subfield>
+    </datafield>
+  </record>
+</collection>
