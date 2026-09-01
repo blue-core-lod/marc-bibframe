@@ -31,6 +31,11 @@ jobs:
         run: uv run ty check
 
       - name: Tests
+        env:
+          # The upstream-version test calls the GitHub API. Without a token the
+          # anonymous limit is 60/hour per IP, which shared runners share, and
+          # the test skips instead of checking anything.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: uv run pytest
 
       - name: Vendored stylesheets match upstream plus patches

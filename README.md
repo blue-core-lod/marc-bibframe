@@ -103,6 +103,10 @@ If a patch stops applying the script says so and stops, which is usually the
 signal that it was fixed upstream and can be deleted. The aim is to keep
 `patches/` empty; anything in there should also be reported to LC.
 
+The test suite checks the vendored tag against LC's latest release and fails
+when there is a newer one, with the command to run. It skips rather than fails
+if the GitHub API is unreachable.
+
 The stylesheets are [CC0](src/marc_bibframe/xsl/LICENSE). This wrapper is
 [MIT](LICENSE).
 
