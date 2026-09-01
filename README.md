@@ -13,7 +13,25 @@ alongside it and no Java or Saxon involved — just `lxml`, `pymarc` and
 pip install marc-bibframe
 ```
 
-## Use
+## Command line
+
+```
+$ marc-bibframe record.mrc
+$ marc-bibframe record.xml --format json-ld --baseuri https://example.edu/catalog/
+$ yaz-marcdump -o marcxml big.mrc | marc-bibframe -f nt -o big.nt
+```
+
+Binary MARC21 and MARCXML are both accepted and told apart by their content,
+so there is no flag for it. With no filename it reads standard input.
+
+`--format` takes `turtle` (the default), `json-ld`, `ntriples`, `xml`, or
+`rdfxml`. The last is the stylesheet's own output passed through without a
+parse into rdflib, which is faster and keeps the transform's exact shape.
+
+`marc-bibframe --help` lists the stylesheet parameters, which are also
+available as flags.
+
+## Use as a library
 
 ```python
 from marc_bibframe import marc_to_graph
@@ -80,6 +98,13 @@ signal that it was fixed upstream and can be deleted. The aim is to keep
 
 The stylesheets are [CC0](src/marc_bibframe/xsl/LICENSE). This wrapper is
 [MIT](LICENSE).
+
+## Reproducible output
+
+The transform stamps the current time into the work's admin metadata.
+`generation_datestamp` (`--datestamp`) overrides it, which makes the RDF/XML
+byte-for-byte reproducible. The other serializations still vary between runs:
+rdflib mints fresh blank node labels every time it serializes.
 
 ## Development
 

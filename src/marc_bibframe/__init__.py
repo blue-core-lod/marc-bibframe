@@ -134,8 +134,11 @@ def marcxml_to_rdfxml(
     bcp47_inference
         Omit a BCP-47 script subtag when it can be inferred from the language.
     generation_datestamp
-        Override the timestamp recorded in the work's admin metadata. Set it to
-        make output byte-for-byte reproducible.
+        Override the timestamp recorded in the work's admin metadata, which
+        otherwise defaults to now. Set it to make the RDF/XML this function
+        returns byte-for-byte reproducible. Note that a Graph serialized by
+        rdflib still varies between runs, because rdflib mints fresh blank
+        node labels each time.
     """
     if isinstance(marcxml, str):
         # Encode first: lxml refuses a str carrying an encoding declaration.
