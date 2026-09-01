@@ -23,8 +23,12 @@ def test_converts_marcxml(capsys):
 
 def test_input_format_is_detected_not_declared(capsys):
     """The same record as binary MARC and as MARCXML converts identically."""
-    from_marc = sorted(run(capsys, VERNE_MRC, "-f", "rdfxml").splitlines())
-    from_marcxml = sorted(run(capsys, VERNE_XML, "-f", "rdfxml").splitlines())
+    # --datestamp for the same reason as in test_marc_bibframe.py: the admin
+    # metadata timestamp otherwise differs whenever the two runs straddle a
+    # second.
+    stamp = ("--datestamp", "2026-09-01T00:00:00")
+    from_marc = sorted(run(capsys, VERNE_MRC, "-f", "rdfxml", *stamp).splitlines())
+    from_marcxml = sorted(run(capsys, VERNE_XML, "-f", "rdfxml", *stamp).splitlines())
     assert from_marc == from_marcxml
 
 

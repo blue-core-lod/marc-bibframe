@@ -54,8 +54,15 @@ def test_marcxml_to_rdfxml_returns_bytes(verne_marcxml):
 def test_marcxml_accepts_str_bytes_and_xml_declaration(verne_marcxml):
     """lxml rejects a str carrying an encoding declaration, so we encode first."""
     assert verne_marcxml.startswith("<?xml")
-    from_str = marcxml_to_rdfxml(verne_marcxml)
-    from_bytes = marcxml_to_rdfxml(verne_marcxml.encode("utf-8"))
+    # Pin the datestamp: the transform stamps the current time into the work's
+    # admin metadata, so two unpinned calls differ whenever they straddle a
+    # second, which is a coin flip rather than a bug in the encoding handling
+    # this test is about.
+    stamp = "2026-09-01T00:00:00"
+    from_str = marcxml_to_rdfxml(verne_marcxml, generation_datestamp=stamp)
+    from_bytes = marcxml_to_rdfxml(
+        verne_marcxml.encode("utf-8"), generation_datestamp=stamp
+    )
     assert from_str == from_bytes
 
 
