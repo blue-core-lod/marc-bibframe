@@ -20,7 +20,9 @@ def agent(graph: Graph) -> URIRef:
     """The one bf:Person in the graph."""
     people = list(graph.subjects(RDF.type, BF.Person))
     assert len(people) == 1
-    return people[0]
+    person = people[0]
+    assert isinstance(person, URIRef)
+    return person
 
 
 def test_marc_to_marcxml(verne_marc):
@@ -107,11 +109,12 @@ def test_idfield_selects_the_record_id(verne_marcxml):
 
 
 def test_generation_datestamp_makes_output_reproducible(verne_marcxml):
-    kwargs = {"generation_datestamp": "2026-09-01T00:00:00"}
-    assert marcxml_to_rdfxml(verne_marcxml, **kwargs) == marcxml_to_rdfxml(
-        verne_marcxml, **kwargs
-    )
-    assert b"2026-09-01T00:00:00" in marcxml_to_rdfxml(verne_marcxml, **kwargs)
+    stamp = "2026-09-01T00:00:00"
+    first = marcxml_to_rdfxml(verne_marcxml, generation_datestamp=stamp)
+    second = marcxml_to_rdfxml(verne_marcxml, generation_datestamp=stamp)
+
+    assert first == second
+    assert stamp.encode() in first
 
 
 def test_boolean_params_are_passed_as_xpath_not_strings(verne_marcxml):

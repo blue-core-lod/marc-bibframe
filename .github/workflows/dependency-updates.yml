@@ -45,7 +45,7 @@ jobs:
         run: uv sync
 
       # The same checks CI runs, in the same order. A dependency bump can break
-      # formatting or typing as easily as it breaks a test -- ruff and mypy are
+      # formatting or typing as easily as it breaks a test -- ruff and ty are
       # themselves dependencies here.
       - name: Format
         if: steps.check_changes.outputs.changed == 'true'
@@ -57,7 +57,7 @@ jobs:
 
       - name: Types
         if: steps.check_changes.outputs.changed == 'true'
-        run: uv run mypy src
+        run: uv run ty check
 
       - name: Run tests
         if: steps.check_changes.outputs.changed == 'true'

@@ -151,8 +151,7 @@ def marcxml_to_rdfxml(
         bcp47inferrence=bcp47_inference,
         pGenerationDatestamp=generation_datestamp,
     )
-    # lxml-stubs types XSLT's keyword parameters as bool; they are XSLT params.
-    result = _transform()(ET.fromstring(marcxml), **params)  # type: ignore[arg-type]
+    result = _transform()(ET.fromstring(marcxml), **params)
     return ET.tostring(
         result, xml_declaration=True, encoding="UTF-8", pretty_print=True
     )

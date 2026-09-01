@@ -28,10 +28,13 @@ Issues = "https://github.com/blue-core-lod/marc-bibframe/issues"
 
 [dependency-groups]
 dev = [
-    "mypy>=1.16.1",
     "pytest>=8.3.4",
     "ruff>=0.9.6",
+    # ty resolves lxml through these; without them lxml.etree is unresolved.
     "lxml-stubs>=0.5.1",
+    # Declared so CI resolves the same checker as a local `uv run ty check`,
+    # rather than whatever happens to be on PATH.
+    "ty>=0.0.1a1",
 ]
 
 [build-system]
@@ -44,6 +47,3 @@ packages = ["src/marc_bibframe"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 addopts = "-v"
-
-[tool.mypy]
-ignore_missing_imports = true
