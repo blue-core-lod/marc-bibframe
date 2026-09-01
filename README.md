@@ -1,5 +1,8 @@
 # marc-bibframe
 
+[![Test](https://github.com/blue-core-lod/marc-bibframe/actions/workflows/test.yml/badge.svg)](https://github.com/blue-core-lod/marc-bibframe/actions/workflows/test.yml)
+[![PyPI](https://img.shields.io/pypi/v/marc-bibframe)](https://pypi.org/project/marc-bibframe/)
+
 Convert MARC records to BIBFRAME RDF in Python, using the Library of Congress
 [marc2bibframe2](https://github.com/lcnetdev/marc2bibframe2) XSLT.
 
