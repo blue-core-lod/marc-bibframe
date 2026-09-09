@@ -1,5 +1,6 @@
 import pytest
 from rdflib import RDF, RDFS, Graph, Literal, Namespace, URIRef
+from rdflib.compare import isomorphic
 
 from marc_bibframe import (
     DEFAULT_BASE_URI,
@@ -139,6 +140,24 @@ def test_bcp47_script_is_not_inferred_when_no_script_was_found(russian_marcxml):
     rdfxml = marcxml_to_rdfxml(russian_marcxml)
     assert b'xml:lang="ru-"' not in rdfxml
     assert b'xml:lang="ru"' in rdfxml
+
+
+def test_a_series_statement_becomes_one_relation(series_marcxml):
+    """A 490 with a $v is converted twice -- see issue #2.
+
+    One 490 describes one series, so the work should get one bf:relation. When
+    the field carries an enumeration in $v the transform emits two, and they
+    are the same description twice -- identical apart from the blank node
+    labels rdflib mints for them.
+    """
+    graph = marcxml_to_graph(series_marcxml)
+    works = list(graph.subjects(RDF.type, BF.Work))
+    assert len(works) == 1
+
+    relations = list(graph.objects(works[0], BF.relation))
+    first = graph.cbd(relations[0])
+    assert all(isomorphic(graph.cbd(rel), first) for rel in relations)
+    assert len(relations) == 1
 
 
 def test_upstream_records_what_is_vendored():

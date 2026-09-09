@@ -18,3 +18,8 @@ def verne_marc() -> bytes:
 @pytest.fixture
 def russian_marcxml() -> str:
     return (FIXTURES / "russian-no-script.xml").read_text()
+
+
+@pytest.fixture
+def series_marcxml() -> str:
+    return (FIXTURES / "series-490.xml").read_text()
