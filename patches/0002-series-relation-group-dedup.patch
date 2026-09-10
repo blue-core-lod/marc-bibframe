@@ -1,0 +1,50 @@
+Subject: Dedupe 490 group numbers without the preceding:: axis
+
+ConvSpec-Process6-Series.xsl builds a result tree fragment holding one
+bf:title, bf:identifiedBy and bf:seriesEnumeration per group of 490 subfields,
+each tagged with a groupNum, then takes the distinct group numbers to decide
+how many bf:Relation nodes to emit. The distinct-values idiom it uses asks,
+from an attribute node, for preceding::bf:*/@groupNum.
+
+libxslt gets that axis wrong over a node-set made with exsl:node-set: it omits
+the preceding sibling element itself while including that sibling's
+descendants. The groupNum being compared against is therefore never in the
+node-set, nothing is filtered, and a 490 whose fragment has more than one
+child -- any 490 with a $v or a $x alongside its $a -- yields one identical
+bf:Relation per child. Downstream that is a work with two indistinguishable
+bf:relation values.
+
+An eight-line reproducer, with an <a n="1"><deep/></a> and a <b n="1"/> as
+siblings in a fragment, asking for preceding::* from the @n on b:
+
+  libxslt  [deep]     <- wrong, a is missing
+  Saxon    [a deep]
+
+On a plain source document both processors agree and both are right, so this
+only shows up for fragments, and only on libxslt. Saxon is what upstream
+develops and runs CI against, which is why the code is correct there and
+lcnetdev has not seen it.
+
+Comparing preceding-sibling::*/@groupNum from the element instead of
+preceding::bf:*/@groupNum from the attribute avoids the axis entirely.
+Verified against Saxon HE 12.4 and libxslt 1.1.35 over the upstream test data:
+Saxon output is unchanged byte for byte, and libxslt now agrees with Saxon
+exactly where it previously emitted duplicates.
+
+Upstream status: not yet reported to lcnetdev/marc2bibframe2. The libxslt axis
+bug is not yet reported either.
+Origin: https://github.com/blue-core-lod/marc-bibframe/issues/2
+
+diff --git a/src/marc_bibframe/xsl/ConvSpec-Process6-Series.xsl b/src/marc_bibframe/xsl/ConvSpec-Process6-Series.xsl
+index 7c5ee20..57d05ed 100644
+--- a/src/marc_bibframe/xsl/ConvSpec-Process6-Series.xsl
++++ b/src/marc_bibframe/xsl/ConvSpec-Process6-Series.xsl
+@@ -63,7 +63,7 @@
+     
+     <!-- Find the group numbers. -->
+     <xsl:variable name="tThisDF" select="."/>
+-      <xsl:variable name="tGroupNums" select="$grouped490Info//@groupNum[not(.=preceding::bf:*/@groupNum[1])]" />
++      <xsl:variable name="tGroupNums" select="$grouped490Info/*[not(@groupNum = preceding-sibling::*/@groupNum)]/@groupNum" />
+       <xsl:for-each select="$tGroupNums">
+         <xsl:variable name="tGNum" select="."/>    
+         <bf:relation>
