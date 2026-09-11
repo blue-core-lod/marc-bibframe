@@ -1,0 +1,37 @@
+<marcxml:record xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:marcxml="http://www.loc.gov/MARC21/slim" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:madsrdf="http://www.loc.gov/mads/rdf/v1#" xmlns:ri="http://id.loc.gov/ontologies/RecordInfo#" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mets="http://www.loc.gov/METS/" xmlns:idx="info:lc/xq-modules/lcindex" xmlns:bfidx="info:lc/xq-modules/bfidx" xmlns:semtriples="http://marklogic.com/semantic" xmlns:bf="http://id.loc.gov/ontologies/bibframe/" xmlns:bflc="http://id.loc.gov/ontologies/bflc/" xmlns:bfsimple="http://id.loc.gov/ontologies/bfsimple/" xmlns:dcterms="http://purl.org/dc/terms/">
+  <marcxml:leader>00961nz  a2200169n  4500</marcxml:leader>
+  <marcxml:controlfield tag="001">gf2014026339</marcxml:controlfield>
+  <marcxml:controlfield tag="003">DLC</marcxml:controlfield>
+  <marcxml:controlfield tag="005">20150513181123.9</marcxml:controlfield>
+  <marcxml:controlfield tag="008">141201|| anznnbabn          |a ana     c</marcxml:controlfield>
+  <marcxml:datafield tag="010" ind1=" " ind2=" ">
+    <marcxml:subfield code="a">gf2014026339</marcxml:subfield>
+  </marcxml:datafield>
+  <marcxml:datafield tag="040" ind1=" " ind2=" ">
+    <marcxml:subfield code="a">IlChALCS</marcxml:subfield>
+    <marcxml:subfield code="b">eng</marcxml:subfield>
+    <marcxml:subfield code="c">DLC</marcxml:subfield>
+    <marcxml:subfield code="f">lcgft</marcxml:subfield>
+  </marcxml:datafield>
+  <marcxml:datafield tag="155" ind1=" " ind2=" ">
+    <marcxml:subfield code="a">Fiction</marcxml:subfield>
+  </marcxml:datafield>
+  <marcxml:datafield tag="455" ind1=" " ind2=" ">
+    <marcxml:subfield code="a">Stories</marcxml:subfield>
+  </marcxml:datafield>
+  <marcxml:datafield tag="455" ind1=" " ind2=" ">
+    <marcxml:subfield code="a">Tales</marcxml:subfield>
+  </marcxml:datafield>
+  <marcxml:datafield tag="555" ind1=" " ind2=" ">
+    <marcxml:subfield code="w">g</marcxml:subfield>
+    <marcxml:subfield code="a">Literature</marcxml:subfield>
+  </marcxml:datafield>
+  <marcxml:datafield tag="670" ind1=" " ind2=" ">
+    <marcxml:subfield code="a">Baldick, C. Oxford dictionary of literary terms, c2008</marcxml:subfield>
+    <marcxml:subfield code="b">(Fiction: the general term for invented stories, now usually applied to novels, short stories, novellas, romances, fables and other narrative works in prose, even though most plays and narrative poems are also fictional.)</marcxml:subfield>
+  </marcxml:datafield>
+  <marcxml:datafield tag="670" ind1=" " ind2=" ">
+    <marcxml:subfield code="a">Britannica online, April 12, 2012</marcxml:subfield>
+    <marcxml:subfield code="b">(Fiction: literature created from the imagination, not presented as fact, though it may be based on a true story or situation. Types of literature in the fiction genre include the novel, short story, and novella. The word is from the Latin fictiō, "the act of making, fashioning, or molding.")</marcxml:subfield>
+  </marcxml:datafield>
+</marcxml:record>

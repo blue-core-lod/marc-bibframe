@@ -1,0 +1,54 @@
+diff --git a/src/marc_bibframe/bf2marc/compile.xsl b/src/marc_bibframe/bf2marc/compile.xsl
+index b39c2f2..fd4d508 100644
+--- a/src/marc_bibframe/bf2marc/compile.xsl
++++ b/src/marc_bibframe/bf2marc/compile.xsl
+@@ -49,6 +49,11 @@
+       <xsl:param name="pConversionAgency" select="'DLC'"/>
+       <xsl:param name="pGenerationUri" select="'https://github.com/lcnetdev/bibframe2marc'"/>
+       <xsl:param name="pSRULookup"/>
++      <!-- Set to true() when the host application resolves URIs on the
++           stylesheet's behalf (e.g. libxslt embedded in a program that
++           supplies its own URI resolver) and so can reach HTTPS. The libxslt
++           workarounds below are then unnecessary and actively lossy. -->
++      <xsl:param name="pHttpsAvailable" select="false()"/>
+ 
+       <!-- for upper- and lower-case translation (ASCII only) -->
+       <xsl:variable name="lower">abcdefghijklmnopqrstuvwxyz</xsl:variable>
+@@ -998,7 +1003,9 @@
+           Change the extension on the resource to .marcxml.xml UNLESS
+           global variable pSRULookup is "true" (string eq), THEN
+           convert id.loc.gov lookup to SRU search to get around
+-          limitations of libxslt web client. Can also force SRU
++          limitations of libxslt web client, unless pHttpsAvailable is
++          true(), meaning the host application does the fetching and the
++          workaround would only lose lookups. Can also force SRU
+           lookup with template param pForceSRULookup (for testing)
+       -->
+       <xsl:template name="tGetMARCAuth">
+@@ -1015,7 +1022,7 @@
+                             )
+                             and not('.marcxml.xml' = substring($pUri, string-length($pUri) - 11))">
+               <xsl:choose>
+-                <xsl:when test="($xslProcessor='libxslt' or $pSRULookup='true' or $pForceSRULookup=true())">
++                <xsl:when test="(($xslProcessor='libxslt' and not($pHttpsAvailable)) or $pSRULookup='true' or $pForceSRULookup=true())">
+                   <xsl:variable name="vUriLccn">
+                     <xsl:call-template name="tUriCode">
+                       <xsl:with-param name="pUri" select="$pUri"/>
+@@ -1096,7 +1103,7 @@
+           </xsl:choose>
+         </xsl:variable>
+         <xsl:choose>
+-          <xsl:when test="$vUrl != '' and not($xslProcessor='libxslt' and contains($vUrl, 'resources/hubs'))">
++          <xsl:when test="$vUrl != '' and not($xslProcessor='libxslt' and not($pHttpsAvailable) and contains($vUrl, 'resources/hubs'))">
+             <xsl:variable name="vDoc">
+               <xsl:choose>
+                 <xsl:when test="function-available('xdmp:document-get')">
+@@ -1132,7 +1139,7 @@
+       -->
+       <xsl:template name="tGetLabel">
+         <xsl:param name="pUri"/>
+-        <xsl:if test="$xslProcessor != 'libxslt'">
++        <xsl:if test="$xslProcessor != 'libxslt' or $pHttpsAvailable">
+         <xsl:variable name="vUrl">
+           <xsl:choose>
+             <xsl:when test="( 

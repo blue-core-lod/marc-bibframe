@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
-from pathlib import Path
 
 from marc_bibframe import (
     DEFAULT_BASE_URI,
@@ -13,6 +11,7 @@ from marc_bibframe import (
     marcxml_to_rdfxml,
     upstream,
 )
+from marc_bibframe._cli import read_input, write_output
 
 # rdflib's name for each, except rdfxml, which we serve from the transform
 # directly rather than round-tripping it through a parse.
@@ -109,17 +108,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
-    if args.input == "-":
-        data = sys.stdin.buffer.read()
-    else:
-        path = Path(args.input)
-        if not path.exists():
-            sys.exit(f"marc-bibframe: {path}: no such file")
-        data = path.read_bytes()
-
-    if not data.strip():
-        sys.exit("marc-bibframe: no input")
-
+    data = read_input(args.input, "marc-bibframe")
     marcxml = data if looks_like_marcxml(data) else marc_to_marcxml(data)
 
     params = {
@@ -139,10 +128,7 @@ def main(argv: list[str] | None = None) -> int:
             format=rdflib_format, encoding="utf-8"
         )
 
-    if args.output:
-        Path(args.output).write_bytes(out)
-    else:
-        sys.stdout.buffer.write(out)
+    write_output(out, args.output)
     return 0
 
 

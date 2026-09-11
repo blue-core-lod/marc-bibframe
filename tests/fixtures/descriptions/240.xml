@@ -1,0 +1,55 @@
+<?xml version='1.0'?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:bf="http://id.loc.gov/ontologies/bibframe/" xmlns:bflc="http://id.loc.gov/ontologies/bflc/" xmlns:madsrdf="http://www.loc.gov/mads/rdf/v1#">
+  <bf:Work rdf:about="http://example.org/6#Work">
+    <bf:contribution>
+      <bf:Contribution>
+        <rdf:type rdf:resource="http://id.loc.gov/ontologies/bflc/PrimaryContribution"/>
+        <bf:agent>
+          <bf:Agent rdf:about="http://example.org/6#Agent100-2">
+            <rdf:type rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"/>
+            <bflc:name00MatchKey>Nefwich, Harvey</bflc:name00MatchKey>
+            <bflc:primaryContributorName00MatchKey>Nefwich, Harvey</bflc:primaryContributorName00MatchKey>
+            <bflc:name00MarcKey>1001 $aNefwich, Harvey.</bflc:name00MarcKey>
+            <rdfs:label>Nefwich, Harvey</rdfs:label>
+          </bf:Agent>
+        </bf:agent>
+        <bf:role>
+          <bf:Role rdf:about="http://id.loc.gov/vocabulary/relators/ctb"/>
+        </bf:role>
+      </bf:Contribution>
+    </bf:contribution>
+    <bf:expressionOf>
+      <bf:Hub rdf:about="http://example.org/6#Hub240-3">
+        <rdf:type rdf:resource="http://id.loc.gov/ontologies/bibframe/Arrangement"/>
+        <bf:contribution>
+          <bf:Contribution>
+            <rdf:type rdf:resource="http://id.loc.gov/ontologies/bflc/PrimaryContribution"/>
+            <bf:agent>
+              <bf:Agent rdf:about="http://example.org/6#Hub240-3-Agent">
+                <rdf:type rdf:resource="http://id.loc.gov/ontologies/bibframe/Person"/>
+                <bflc:name00MatchKey>Nefwich, Harvey</bflc:name00MatchKey>
+                <bflc:primaryContributorName00MatchKey>Nefwich, Harvey</bflc:primaryContributorName00MatchKey>
+                <bflc:name00MarcKey>1001 $aNefwich, Harvey.</bflc:name00MarcKey>
+                <rdfs:label>Nefwich, Harvey</rdfs:label>
+              </bf:Agent>
+            </bf:agent>
+            <bf:role>
+              <bf:Role rdf:about="http://id.loc.gov/vocabulary/relators/ctb"/>
+            </bf:role>
+          </bf:Contribution>
+        </bf:contribution>
+        <bf:title>
+          <bf:Title>
+            <bflc:title40MatchKey>Sonata for kazoo. arr.</bflc:title40MatchKey>
+            <bflc:title40MarcKey>24010$aSonata for kazoo.$oarr.</bflc:title40MarcKey>
+            <bf:mainTitle>Sonata for kazoo. arr.</bf:mainTitle>
+          </bf:Title>
+        </bf:title>
+      </bf:Hub>
+    </bf:expressionOf>
+    <bf:hasInstance rdf:resource="http://example.org/6#Instance"/>
+  </bf:Work>
+  <bf:Instance rdf:about="http://example.org/6#Instance">
+    <bf:instanceOf rdf:resource="http://example.org/6#Work"/>
+  </bf:Instance>
+</rdf:RDF>
