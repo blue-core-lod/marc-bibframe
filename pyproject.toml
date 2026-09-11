@@ -1,11 +1,19 @@
 [project]
 name = "marc-bibframe"
-version = "0.2.2"
-description = "Convert MARC records to BIBFRAME RDF using the Library of Congress marc2bibframe2 XSLT"
+version = "0.3.0"
+description = "Convert between MARC and BIBFRAME RDF using the Library of Congress marc2bibframe2 and bibframe2marc XSLTs"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
-keywords = ["marc", "bibframe", "marcxml", "rdf", "marc2bibframe2", "libraries"]
+keywords = [
+    "marc",
+    "bibframe",
+    "marcxml",
+    "rdf",
+    "marc2bibframe2",
+    "bibframe2marc",
+    "libraries",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -21,6 +29,7 @@ dependencies = [
 
 [project.scripts]
 marc-bibframe = "marc_bibframe.cli:main"
+bibframe-marc = "marc_bibframe.bf2marc_cli:main"
 
 [project.urls]
 Homepage = "https://github.com/blue-core-lod/marc-bibframe"
@@ -46,4 +55,10 @@ packages = ["src/marc_bibframe"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-addopts = "-v"
+# Converting against the live id.loc.gov is left out of a default run; run it
+# with: pytest -m live. The upstream-version nag still runs by default.
+addopts = "-v -m 'not live'"
+markers = [
+    "network: may reach the network, so the offline guard stands aside",
+    "live: converts against the live id.loc.gov service, deselected by default",
+]

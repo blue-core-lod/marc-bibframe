@@ -1,0 +1,2178 @@
+<?xml version='1.0'?>
+<rules xmlns="http://www.loc.gov/bf2marc"
+       xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+       xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+       xmlns:bf="http://id.loc.gov/ontologies/bibframe/"
+       xmlns:bflc="http://id.loc.gov/ontologies/bflc/"
+       xmlns:madsrdf="http://www.loc.gov/mads/rdf/v1#"
+       xmlns:marc="http://www.loc.gov/MARC21/slim"
+       xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <df tag="010" repeatable="false">
+    <context xpath="bf:Instance/bf:identifiedBy/*[
+        (local-name()='Lccn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Lccn']) and
+        not(
+          bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+          bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+          bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/cancinv'
+        )]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <var name="vLccnValue" xpath="rdf:value" />
+      <var name="vLccn">
+        <transform>
+          <xsl:choose>
+            <xsl:when test="string-length($vLccnValue) = 10">
+              <xsl:call-template name="tPadLeft">
+                <xsl:with-param name="pInput" select="$vLccnValue"/>
+                <!-- useful for testing. -->
+                <xsl:with-param name="pPadChar" select="' '"/>
+                <xsl:with-param name="pStringLength">12</xsl:with-param>
+              </xsl:call-template>
+            </xsl:when>
+            <xsl:when test="string-length($vLccnValue) &lt; 10">
+              <xsl:variable name="vLccnPart1">
+                <xsl:call-template name="tPadLeft">
+                  <xsl:with-param name="pInput" select="$vLccnValue"/>
+                  <!-- useful for testing. -->
+                  <xsl:with-param name="pPadChar" select="' '"/>
+                  <xsl:with-param name="pStringLength">11</xsl:with-param>
+                </xsl:call-template>  
+              </xsl:variable>
+              <xsl:value-of select="concat($vLccnPart1, ' ')" />
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="$vLccnValue" />
+            </xsl:otherwise>
+          </xsl:choose>
+        </transform>
+      </var>
+      <sf code="a" repeatable="false">
+        <transform><xsl:value-of select="$vLccn" /></transform>
+      </sf>
+      <sf code="z">
+        <select xpath="ancestor::bf:Instance/bf:identifiedBy/*[
+            (local-name()='Lccn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Lccn']) and
+            (
+              bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+              bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+              bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/cancinv'
+            )]/rdf:value"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="015">
+    <context xpath="bf:Instance/bf:identifiedBy/*[local-name()='Nbn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Nbn']]">
+      <var name="vSourceUri">
+        <switch>
+          <case test="bf:source/@rdf:resource"><transform><xsl:value-of select="bf:source/@rdf:resource"/></transform></case>
+          <case test="bf:source/bf:Source/@rdf:about"><transform><xsl:value-of select="bf:source/bf:Source/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status/bf:Status/rdfs:label[text()='invalid'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="default">
+          <sf code="a"><select xpath="rdf:value"/></sf>
+        </case>
+      </switch>
+      <switch>
+        <case test="bf:source/bf:Source/*[local-name()='code']">
+          <sf code="2"><transform><xsl:value-of select="bf:source/bf:Source/*[local-name()='code'][1]"/></transform></sf>
+        </case>
+        <case test="$vSourceUri != ''">
+          <sf code="2">
+            <switch>
+              <case test="contains($vSourceUri,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="$vSourceUri"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="$vSourceUri"/></transform></case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+    </context>
+  </df>
+
+  <df tag="016">
+    <context xpath="bf:Instance/bf:identifiedBy/bf:Local[bf:source]|bf:Instance/bf:adminMetadata/bf:AdminMetadata/bf:identifiedBy/bf:Local[bf:source//@rdf:*[.='http://id.loc.gov/authorities/names/no2004037399']]">
+      <var name="vSourceUri">
+        <switch>
+          <case test="bf:source/@rdf:resource"><transform><xsl:value-of select="bf:source/@rdf:resource"/></transform></case>
+          <case test="bf:source/bf:Source/@rdf:about"><transform><xsl:value-of select="bf:source/bf:Source/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <var name="vLAC">
+        <switch>
+          <case test="$vSourceUri='http://id.loc.gov/authorities/names/no2004037399' or
+                      bf:source/bf:Source/rdfs:label='OONL' or
+                      bf:source/bf:Source/rdfs:label='Library and Archives Canada'">true</case>
+        </switch>
+      </var>
+      <ind1 default=" ">
+        <switch>
+          <case test="$vLAC!='true'"><text>7</text></case>
+        </switch>
+      </ind1>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status/bf:Status/rdfs:label[text()='invalid'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="default">
+          <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+        </case>
+      </switch>
+      <switch>
+        <case test="not($vLAC='true')">
+          <switch>
+            <case test="bf:source/bf:Source/*[local-name()='code']">
+              <sf code="2"><transform><xsl:value-of select="bf:source/bf:Source/*[local-name()='code'][1]"/></transform></sf>
+            </case>
+            <case test="$vSourceUri != ''">
+              <sf code="2">
+                <switch>
+                  <case test="contains($vSourceUri,'id.loc.gov')">
+                    <transform>
+                      <xsl:variable name="vC">
+                        <xsl:call-template name="tUriCode">
+                          <xsl:with-param name="pUri" select="$vSourceUri"/>
+                        </xsl:call-template>  
+                      </xsl:variable>
+                      <xsl:value-of select="translate($vC, $lower, $upper)" />
+                    </transform>
+                  </case>
+                  <case test="default"><transform><xsl:value-of select="$vSourceUri"/></transform></case>
+                </switch>
+              </sf>
+            </case>
+          </switch>
+        </case>
+      </switch>
+    </context>
+  </df>
+
+  <df tag="017">
+    <context xpath="bf:Instance/bf:identifiedBy/*[local-name()='CopyrightNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/CopyrightNumber']]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status/bf:Status/rdfs:label[text()='invalid'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="default">
+          <sf code="a"><select xpath="rdf:value"/></sf>
+        </case>
+      </switch>
+      <sf code="b" chopPunct="true" repeatable="false"><select xpath="bf:assigner/bf:*/rdfs:label"/></sf>
+      <sf code="d" chopPunct="true" repeatable="false"><select xpath="bf:date"/></sf>
+      <sf code="i" chopPunct="true" repeatable="false"><select xpath="bf:note/bf:Note/rdfs:label"/></sf>
+    </context>
+  </df>
+
+  <df tag="020">
+    <context xpath="bf:Instance/bf:identifiedBy/*[(local-name()='Isbn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Isbn']) and rdf:value/text()]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status//@rdf:*[1]='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+                    bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+                    bf:status/bf:Status/rdfs:label[text()='invalid'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="default">
+          <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+          <sf code="c" chopPunct="true" repeatable="false"><select xpath="bf:acquisitionTerms"/></sf>
+        </case>
+      </switch>
+      <sf chopPunct="true" code="q"><select xpath="bf:qualifier"/></sf>
+    </context>
+  </df>
+
+  <df tag="022">
+    <context xpath="bf:Work/bf:identifiedBy/*[(local-name()='Issn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Issn']) and rdf:value/text()] | 
+      bf:Instance/bf:identifiedBy/*[(local-name()='Issn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Issn']) and rdf:value/text()]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status//@rdf:*[1]='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+                    bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+                    bf:status/bf:Status/rdfs:label[text()='canceled'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="bf:status/bf:Status/rdfs:label[text()='incorrect'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/incorrect' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/incorrect'">
+          <sf code="y"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="default">
+          <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+        </case>
+      </switch>
+      <sf code="0"><select xpath="@rdf:about"/></sf>
+      <sf code="2" chopPunct="true" repeatable="false"><select xpath="bf:assigner/bf:Agent/bf:code"/></sf>
+    </context>
+  </df>
+  
+  <df tag="023">
+    <context xpath="bf:Work/bf:identifiedBy/*[(local-name()='IssnL' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/IssnL']) and rdf:value/text()] | 
+      bf:Instance/bf:identifiedBy/*[(local-name()='IssnL' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/IssnL']) and rdf:value/text()]">
+      <ind1 default="0"/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status//@rdf:*[1]='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+          bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+          bf:status/bf:Status/rdfs:label[text()='canceled'] or
+          bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+          bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="bf:status/bf:Status/rdfs:label[text()='incorrect'] or
+          bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/incorrect' or
+          bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/incorrect'">
+          <sf code="y"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="default">
+          <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+        </case>
+      </switch>
+      <sf code="0"><select xpath="@rdf:about"/></sf>
+      <sf code="2" chopPunct="true" repeatable="false"><select xpath="bf:assigner/bf:Agent/bf:code"/></sf>
+    </context>
+  </df>
+
+  <df tag="024">
+    <context xpath="bf:Instance/bf:identifiedBy/*[local-name()='Isrc' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Isrc']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Upc' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Upc']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Ismn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Ismn']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Ean' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Ean']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Sici' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Sici']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Ansi' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Ansi']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Doi' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Doi']] |
+      bf:Work/bf:identifiedBy/*[local-name()='Eidr' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bflc/Eidr'] or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Eidr']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Gtin14Number' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Gtin14Number']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Hdl' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Hdl']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Isan' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Isan']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Isni' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Isni']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Iso' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Iso']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Istc' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Istc']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Iswc' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Iswc']] |
+      bf:Instance/bf:identifiedBy/*[local-name()='Urn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Urn']] |
+      bf:Instance/bf:identifiedBy/bf:Identifier[not(rdf:type or bf:assigner/@rdf:resource='http://id.loc.gov/vocabulary/organizations/dgpo' or bf:assigner/*/@rdf:about='http://id.loc.gov/vocabulary/organizations/dgpo')]">
+      <ind1 default="7">
+        <switch>
+          <case test="local-name()='Isrc' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Isrc']">0</case>
+          <case test="local-name()='Upc' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Upc']">1</case>
+          <case test="local-name()='Ismn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Ismn']">2</case>
+          <case test="local-name()='Ean' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Ean']">3</case>
+          <case test="local-name()='Sici' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Sici']">4</case>
+          <case test="local-name()='Identifier' and not(rdf:type) and not(rdfs:label) and not (bf:source)">8</case>
+        </switch>
+      </ind1>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status//@rdf:*[1]='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+                    bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+                    bf:status/bf:Status/rdfs:label[text()='invalid'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="default">
+          <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+          <sf code="c" chopPunct="true" repeatable="false"><select xpath="bf:acquisitionTerms"/></sf>
+        </case>
+      </switch>
+      <sf code="q" chopPunct="true"><select xpath="bf:qualifier"/></sf>
+      <sf code="2" chopPunct="true">
+        <switch>
+          <case test="local-name()='Ansi' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Ansi']">ansi</case>
+          <case test="local-name()='Doi' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Doi']">doi</case>
+          <case test="local-name()='Eidr' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bflc/Eidr'] or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Eidr']">eidr</case>
+          <case test="local-name()='Hdl' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Hdl']">hdl</case>
+          <case test="local-name()='Gtin14Number' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Gtin14Number']">gtin-14</case>
+          <case test="local-name()='Isan' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Isan']">isan</case>
+          <case test="local-name()='Isni' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Isni']">isni</case>
+          <case test="local-name()='Iso' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Iso']">iso</case>
+          <case test="local-name()='Istc' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Istc']">istc</case>
+          <case test="local-name()='Iswc' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Iswc']">iswc</case>
+          <case test="local-name()='Urn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Urn']">urn</case>
+          <case test="default"><select xpath="rdfs:label"/></case>
+        </switch>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="025">
+    <context xpath="bf:Instance/bf:identifiedBy/*[local-name()='LcOverseasAcq' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/LcOverseasAcq']] |
+                    //bf:Item/bf:identifiedBy/*[local-name()='LcOverseasAcq' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/LcOverseasAcq']]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="a"><select xpath="rdf:value"/></sf>
+    </context>
+  </df>
+
+  <df tag="026">
+    <context xpath="bf:Instance/bf:identifiedBy/*[local-name()='Fingerprint' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Fingerprint']]|
+                    //bf:Item/bf:identifiedBy/*[local-name()='Fingerprint' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Fingerprint']]">
+      <var name="vSourceUri">
+        <switch>
+          <case test="bf:source/@rdf:resource"><transform><xsl:value-of select="bf:source/@rdf:resource"/></transform></case>
+          <case test="bf:source/bf:Source/@rdf:about"><transform><xsl:value-of select="bf:source/bf:Source/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="e" repeatable="false"><select xpath="rdf:value"/></sf>
+      <switch>
+        <case test="bf:source/bf:Source/*[local-name()='code']">
+          <sf code="2"><transform><xsl:value-of select="bf:source/bf:Source/*[local-name()='code'][1]"/></transform></sf>
+        </case>
+        <case test="$vSourceUri != ''">
+          <sf code="2">
+            <switch>
+              <case test="contains($vSourceUri,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="$vSourceUri"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="$vSourceUri"/></transform></case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      <sf code="5">
+        <select xpath="bflc:applicableInstitution/bf:Agent/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="027">
+    <context xpath="bf:Instance/bf:identifiedBy/*[local-name()='Strn' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Strn']]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status//@rdf:*[1]='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+                    bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+                    bf:status/bf:Status/rdfs:label[text()='invalid'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="default">
+          <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+        </case>
+      </switch>
+      <sf chopPunct="true" code="q"><select xpath="bf:qualifier"/></sf>
+    </context>
+  </df>
+
+  <df tag="028">
+    <context xpath="bf:Instance/bf:identifiedBy/*[(local-name()='AudioIssueNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/AudioIssueNumber']) and rdf:value/text()] |
+          bf:Instance/bf:identifiedBy/*[(local-name()='MatrixNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/MatrixNumber']) and rdf:value/text()] |
+          bf:Instance/bf:identifiedBy/*[(local-name()='MusicPlate' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/MusicPlate']) and rdf:value/text()] |
+          bf:Instance/bf:identifiedBy/*[(local-name()='MusicPublisherNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/MusicPublisherNumber']) and rdf:value/text()] |
+          bf:Instance/bf:identifiedBy/*[(local-name()='VideoRecordingNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/VideoRecordingNumber']) and rdf:value/text()] |
+          bf:Instance/bf:identifiedBy/*[(local-name()='PublisherNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/PublisherNumber']) and rdf:value/text()] |
+          bf:Instance/bf:identifiedBy/*[(local-name()='MusicDistributorNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/MusicDistributorNumber']) and rdf:value/text()]">
+      <ind1 default="5">
+        <switch>
+          <case test="local-name()='AudioIssueNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/AudioIssueNumber']">0</case>
+          <case test="local-name()='MatrixNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/MatrixNumber']">1</case>
+          <case test="local-name()='MusicPlate' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/MusicPlate']">2</case>
+          <case test="local-name()='MusicPublisherNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/MusicPublisherNumber']">3</case>
+          <case test="local-name()='VideoRecordingNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/VideoRecordingNumber']">4</case>
+          <case test="local-name()='MusicDistributorNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/MusicDistributorNumber']">6</case>
+        </switch>
+      </ind1>
+      <ind2 default="2"/>
+      <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+      <sf code="b" chopPunct="true" repeatable="false"><select xpath="bf:assigner/bf:*/rdfs:label"/></sf>
+      <sf code="q" chopPunct="true"><select xpath="bf:qualifier"/></sf>
+    </context>
+  </df>
+
+  <df tag="030">
+    <context xpath="bf:Instance/bf:identifiedBy/*[local-name()='Coden' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Coden']]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status//@rdf:*[1]='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+                    bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+                    bf:status/bf:Status/rdfs:label[text()='invalid'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="default">
+          <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+        </case>
+      </switch>
+    </context>
+  </df>
+
+  <df tag="032">
+    <context xpath="bf:Instance/bf:identifiedBy/*[local-name()='PostalRegistration' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/PostalRegistration']]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+      <sf code="b" chopPunct="true" repeatable="false"><select xpath="bf:assigner/bf:*/rdfs:label"/></sf>
+    </context>
+  </df>
+
+  <df tag="033">
+    <context xpath="bf:Work/bf:capture/bf:Capture[bf:date[@rdf:datatype='http://id.loc.gov/datatypes/edtf'] or bf:place/@rdf:resource]">
+      <var name="vSourceUri">
+        <switch>
+          <case test="bf:source/@rdf:resource"><transform><xsl:value-of select="bf:source/@rdf:resource"/></transform></case>
+          <case test="bf:source/bf:Source/@rdf:about"><transform><xsl:value-of select="bf:source/bf:Source/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <ind1 default=" ">
+        <switch>
+          <case test="count(bf:date)=1">
+            <switch>
+              <case test="contains(bf:date,'/')">2</case>
+              <case test="default">0</case>
+            </switch>
+          </case>
+          <case test="count(bf:date) > 1">1</case>
+        </switch>
+      </ind1>
+      <ind2 default=" ">
+        <switch>
+          <case test="bf:note/bf:Note[rdfs:label='capture']">0</case>
+          <case test="bf:note/bf:Note[rdfs:label='broadcast']">1</case>
+          <case test="bf:note/bf:Note[rdfs:label='finding']">2</case>
+        </switch>
+      </ind2>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+      </sf>
+      <switch>
+        <case test="count(bf:date)=1">
+          <switch>
+            <case test="bf:date/@rdf:datatype='http://id.loc.gov/datatypes/edtf'">
+              <switch>
+                <case test="contains(bf:date,'/')">
+                  <transform>
+                    <xsl:variable name="vDate1">
+                      <xsl:variable name="vEDTFDate1">
+                        <xsl:call-template name="EDTF-Date1">
+                          <xsl:with-param name="pEDTFDate" select="bf:date"/>
+                        </xsl:call-template>
+                      </xsl:variable>
+                      <xsl:call-template name="EDTF-to-033">
+                        <xsl:with-param name="pEDTFDate" select="$vEDTFDate1"/>
+                      </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:variable name="vDate2">
+                      <xsl:variable name="vEDTFDate2">
+                        <xsl:call-template name="EDTF-Date2">
+                          <xsl:with-param name="pEDTFDate" select="bf:date"/>
+                        </xsl:call-template>
+                      </xsl:variable>
+                      <xsl:call-template name="EDTF-to-033">
+                        <xsl:with-param name="pEDTFDate" select="$vEDTFDate2"/>
+                      </xsl:call-template>
+                    </xsl:variable>
+                    <marc:subfield code="a"><xsl:value-of select="$vDate1"/></marc:subfield>
+                    <marc:subfield code="a"><xsl:value-of select="$vDate2"/></marc:subfield>
+                  </transform>
+                </case>
+                <case test="default">
+                  <transform>
+                    <xsl:variable name="v033Date">
+                      <xsl:call-template name="EDTF-to-033">
+                        <xsl:with-param name="pEDTFDate" select="bf:date"/>
+                      </xsl:call-template>
+                    </xsl:variable>
+                    <marc:subfield code="a"><xsl:value-of select="$v033Date"/></marc:subfield>
+                  </transform>
+                </case>
+              </switch>
+            </case>
+            <case test="default">
+              <transform>
+                <xsl:message>Record <xsl:value-of select="$vRecordId"/>: Unprocessed bf:date node, value <xsl:value-of select="bf:date"/>. Unknown data type (must be EDTF)</xsl:message>
+                <marc:subfield code="a">--------</marc:subfield>
+              </transform>
+            </case>
+          </switch>
+        </case>
+        <case test="default">
+          <select xpath="bf:date">
+            <switch>
+              <case test="@rdf:datatype='http://id.loc.gov/datatypes/edtf'">
+                <switch>
+                  <case test="contains(.,'/')">
+                    <transform>
+                      <xsl:message>Record <xsl:value-of select="$vRecordId"/>: Unprocessed bf:date node, value <xsl:value-of select="."/>. Range of EDTF dates detected where only single value allowed.</xsl:message>
+                      <marc:subfield code="a">--------</marc:subfield>
+                    </transform>
+                  </case>
+                  <case test="default">
+                    <transform>
+                      <xsl:variable name="v033Date">
+                        <xsl:call-template name="EDTF-to-033">
+                          <xsl:with-param name="pEDTFDate" select="."/>
+                        </xsl:call-template>
+                      </xsl:variable>
+                      <marc:subfield code="a"><xsl:value-of select="$v033Date"/></marc:subfield>
+                    </transform>
+                  </case>
+                </switch>
+              </case>
+              <case test="default">
+                <transform>
+                  <xsl:message>Record <xsl:value-of select="$vRecordId"/>: Unprocessed bf:date node, value <xsl:value-of select="."/>. Unknown data type (must be EDTF)</xsl:message>
+                  <marc:subfield code="a">--------</marc:subfield>
+                </transform>
+              </case>
+            </switch>
+          </select>
+        </case>
+      </switch>
+      <select xpath="bf:place">
+        <var name="vPlaceUri" xpath="@rdf:resource|bf:Place/@rdf:about"/>
+        <switch>
+          <case test="starts-with($vPlaceUri,'http://id.loc.gov/authorities/classification/G')">
+            <transform>
+              <xsl:variable name="vPlaceCode">
+                <xsl:call-template name="tUriCode">
+                  <xsl:with-param name="pUri" select="$vPlaceUri"/>
+                </xsl:call-template>
+              </xsl:variable>
+              <xsl:choose>
+                <xsl:when test="contains($vPlaceCode,'.')">
+                  <marc:subfield code="b"><xsl:value-of select="substring-before($vPlaceCode,'.')"/></marc:subfield>
+                  <marc:subfield code="c"><xsl:value-of select="substring-after($vPlaceCode,'.')"/></marc:subfield>
+                </xsl:when>
+                <xsl:otherwise>
+                  <marc:subfield code="b"><xsl:value-of select="$vPlaceCode"/></marc:subfield>
+                </xsl:otherwise>
+              </xsl:choose>
+            </transform>
+          </case>
+          <case test="default">
+            <transform>
+              <xsl:if test="bf:Place/rdf:value or bf:Place/rdfs:label">
+                <marc:subfield code="p">
+                  <xsl:choose>
+                    <xsl:when test="bf:Place/rdf:value"><xsl:value-of select="bf:Place/rdf:value"/></xsl:when>
+                    <xsl:otherwise>
+                      <xsl:call-template name="tChopPunct">
+                        <xsl:with-param name="pString" select="bf:Place/rdfs:label"/>
+                      </xsl:call-template>
+                    </xsl:otherwise>
+                  </xsl:choose>
+                </marc:subfield>
+              </xsl:if>
+            </transform>
+            <switch>
+              <case test="bf:Place/bf:source/bf:Source/*[local-name()='code']">
+                <sf code="2"><transform><xsl:value-of select="bf:Place/bf:source/bf:Source/*[local-name()='code'][1]"/></transform></sf>
+              </case>
+              <case test="$vSourceUri != ''">
+                <sf code="2">
+                  <switch>
+                    <case test="contains($vSourceUri,'id.loc.gov')">
+                      <transform>
+                        <xsl:call-template name="tUriCode">
+                          <xsl:with-param name="pUri" select="$vSourceUri"/>
+                        </xsl:call-template>
+                      </transform>
+                    </case>
+                    <case test="default"><transform><xsl:value-of select="$vSourceUri"/></transform></case>
+                  </switch>
+                </sf>
+              </case>
+            </switch>
+          </case>
+        </switch>
+      </select>
+    </context>
+  </df>
+
+  <df tag="034">
+    <context xpath="bf:Work/bf:scale/bf:Scale[starts-with(rdfs:label,'linear') or starts-with(rdfs:label,'angular')]">
+      <ind1 default="1"/>
+      <ind2 default=" "/>
+      <sf code="a">
+        <switch>
+          <case test="starts-with(rdfs:label,'linear')"><text>a</text></case>
+          <case test="starts-with(rdfs:label,'angular')"><text>b</text></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="rdfs:label='linear horizontal'">
+          <sf code="b"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="rdfs:label='linear vertical'">
+          <sf code="c"><select xpath="rdf:value"/></sf>
+        </case>
+      </switch>
+    </context>
+  </df>
+
+  <df tag="035">
+    <context xpath="bf:Instance/bf:identifiedBy/*[(local-name()='Local' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Local']) and bf:assigner]">
+      <var name="vAssignerUri">
+        <switch>
+          <case test="bf:assigner/@rdf:resource"><transform><xsl:value-of select="bf:assigner/@rdf:resource"/></transform></case>
+          <case test="bf:assigner/*/@rdf:about"><transform><xsl:value-of select="bf:assigner/*/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <var name="vAssignerCode">
+        <switch>
+          <case test="bf:assigner/*/*[local-name()='code']">
+            <transform><xsl:value-of select="bf:assigner/*/*[local-name()='code'][1]"/></transform>
+          </case>
+          <case test="$vAssignerUri != ''">
+            <switch>
+              <case test="contains($vAssignerUri,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="$vAssignerUri"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="contains($vAssignerUri,'ld.zdb-services.de')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="$vAssignerUri"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="$vAssignerUri"/></transform></case>
+            </switch>
+          </case>
+        </switch>
+      </var>
+      <var name="vAssignerString">
+        <switch>
+          <case test="$vAssignerCode != ''">
+            <transform><xsl:value-of select="concat('(',$vAssignerCode,')')"/></transform>
+          </case>
+        </switch>
+      </var>
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status//@rdf:*[1]='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+                    bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+                    bf:status/bf:Status/rdfs:label[text()='invalid'] or
+                    bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+                    bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z">
+            <transform>
+              <xsl:value-of select="concat($vAssignerString,rdf:value)"/>
+            </transform>
+          </sf>
+        </case>
+        <case test="default">
+          <sf code="a" repeatable="false">
+            <transform>
+              <xsl:value-of select="concat($vAssignerString,rdf:value)"/>
+            </transform>
+          </sf>
+        </case>
+      </switch>
+    </context>
+  </df>
+  
+  <df tag="035">
+    <context xpath="bf:Instance/bf:identifiedBy/*[(local-name()='OclcNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/OclcNumber']) and rdf:value]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="bf:status//@rdf:*[1]='http://id.loc.gov/vocabulary/mstatus/cancinv' or
+          bf:status/bf:Status/rdfs:label[text()='canceled or invalid'] or
+          bf:status/bf:Status/rdfs:label[text()='invalid'] or
+          bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/invalid' or
+          bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/invalid'">
+          <sf code="z">
+            <transform>
+              <xsl:value-of select="concat('(OCoLC)',rdf:value)"/>
+            </transform>
+          </sf>
+        </case>
+        <case test="default">
+          <sf code="a" repeatable="false">
+            <transform>
+              <xsl:value-of select="concat('(OCoLC)',rdf:value)"/>
+            </transform>
+          </sf>
+        </case>
+      </switch>
+    </context>
+  </df>
+
+  <df tag="036" repeatable="false">
+    <context xpath="bf:Instance/bf:identifiedBy/*[local-name()='StudyNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/StudyNumber']]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="a" repeatable="false"><select xpath="rdf:value"/></sf>
+      <sf code="b" chopPunct="true" repeatable="false"><select xpath="bf:assigner/bf:*/rdfs:label"/></sf>
+    </context>
+  </df>
+
+  <df tag="037">
+    <context xpath="bf:Instance/bf:acquisitionSource/bf:AcquisitionSource |
+                    //bf:Item/bf:acquisitionSource/bf:AcquisitionSource">
+      <ind1 default=" ">
+        <switch>
+          <case test="bf:note/bf:Note/rdfs:label[text()='intervening source']">2</case>
+          <case test="bf:note/bf:Note/rdfs:label[text()='current source']">3</case>
+        </switch>
+      </ind1>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+      </sf>
+      <sf code="a" repeatable="false">
+        <select xpath="bf:identifiedBy/*[local-name()='StockNumber' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/StudyNumber']]/rdf:value"/>
+      </sf>
+      <sf code="b" chopPunct="true" repeatable="false">
+        <switch>
+          <case test="rdfs:label"><select xpath="rdfs:label"/></case>
+          <case test="bf:source/bf:Source/rdfs:label"><select xpath="bf:source/bf:Source/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <sf code="c" chopPunct="true"><select xpath="bf:acquisitionTerms"/></sf>
+      <sf code="n" chopPunct="true">
+        <select xpath="bf:note/bf:Note/rdfs:label[text() != 'intervening source' and text() != 'current source']"/>
+      </sf>
+      <sf code="5"><select xpath="bflc:applicableInstitution/bf:Agent/bf:code"/></sf>
+    </context>
+  </df>
+
+  <switch>
+    <case test="$vAdminMetadata/bflc:metadataLicensor">
+      <df tag="038" repeatable="false">
+        <ind1 default=" "/>
+        <ind2 default=" "/>
+        <sf code="a" repeatable="false">
+          <transform>
+            <xsl:call-template name="tChopPunct">
+              <xsl:with-param name="pString" select="$vAdminMetadata/bflc:metadataLicensor/bflc:MetadataLicensor/rdfs:label|$vAdminMetadata/bflc:metadataLicensor/*[local-name()='Authority' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#Authority']]/madsrdf:code[@rdf:datatype='http://id.loc.gov/datatypes/orgs/code']"/>
+            </xsl:call-template>
+          </transform>
+        </sf>
+      </df>
+    </case>
+  </switch>
+
+  <!--
+  <df tag="040" repeatable="false">
+    <context xpath="bf:Instance[not(rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance')]/bf:adminMetadata/bf:AdminMetadata/bf:assigner">
+      <var name="vLanguageUri">
+        <switch>
+          <case test="../bf:descriptionLanguage/@rdf:resource"><transform><xsl:value-of select="../bf:descriptionLanguage/@rdf:resource"/></transform></case>
+          <case test="../bf:descriptionLanguage/*/@rdf:about"><transform><xsl:value-of select="../bf:descriptionLanguage/*/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <var name="vAuri">
+          <switch>
+              <case test="@rdf:resource">
+                <transform>
+                  <xsl:value-of select="@rdf:resource"/>
+                </transform>
+              </case>
+              <case test="*/@rdf:about">
+                <transform>
+                  <xsl:value-of select="*/@rdf:about"/>
+                </transform>
+              </case>
+            </switch>
+          </var>
+      <var name="vAcode">
+        <switch>
+          <case test="*/*[local-name()='code']">
+            <transform>
+                <xsl:value-of select="*/*[local-name()='code']"/>
+            </transform>
+          </case>
+          <case test="$vAuri != '' and contains($vAuri,'id.loc.gov')">
+            <transform>
+              <xsl:call-template name="tUriCode">
+                <xsl:with-param name="pUri" select="$vAuri"/>
+              </xsl:call-template>
+            </transform>
+          </case>
+        </switch>
+      </var>
+      <switch>
+        <case test="$vAcode = 'dlc'">
+            <sf code="a" repeatable="false"><transform><xsl:value-of select="translate($vAcode,$lower,$upper)"/></transform></sf>
+        </case>
+        <case test="$vAcode != ''">
+            <sf code="a" repeatable="false"><transform><xsl:value-of select="$vAcode"/></transform></sf>
+        </case>
+      </switch>
+      <switch>
+        <case test="$vLanguageUri != '' and contains($vLanguageUri,'id.loc.gov')">
+          <sf code="b">
+            <transform>
+              <xsl:call-template name="tUriCode">
+                <xsl:with-param name="pUri" select="$vLanguageUri"/>
+              </xsl:call-template>
+            </transform>
+          </sf>
+        </case>
+        <case test="../bf:descriptionLanguage/*/*[local-name()='code']">
+          <sf code="b">
+            <transform><xsl:value-of select="../bf:descriptionLanguage/*/*[local-name()='code']"/></transform>
+          </sf>
+        </case>
+      </switch>
+      <sf code="e">
+        <select xpath="../bf:descriptionConventions[not(contains(@rdf:resource,'isbd')) and
+                                                    not(contains(*/@rdf:about,'isbd')) and
+                                                    not(*/rdf:value='isbd') and
+                                                    not(*/*[local-name()='code']='isbd') and
+                                                    not(*/rdfs:label='isbd') and
+                                                    not(contains(@rdf:resource,'aacr')) and
+                                                    not(contains(*/@rdf:about,'aacr')) and
+                                                    not(*/rdf:value='aacr') and
+                                                    not(*/*[local-name()='code']='aacr') and
+                                                    not(*/rdfs:label='aacr')]">
+          <var name="vConvUri">
+            <switch>
+              <case test="@rdf:resource"><transform><xsl:value-of select="@rdf:resource"/></transform></case>
+              <case test="*/@rdf:about"><transform><xsl:value-of select="*/@rdf:about"/></transform></case>
+            </switch>
+          </var>
+          <switch>
+            <case test="$vConvUri != '' and contains($vConvUri,'id.loc.gov')">
+              <transform>
+                <xsl:call-template name="tUriCode">
+                  <xsl:with-param name="pUri" select="$vConvUri"/>
+                </xsl:call-template>
+              </transform>
+            </case>
+            <case test="*/rdf:value">
+              <transform><xsl:value-of select="*/rdf:value"/></transform>
+            </case>
+            <case test="*/*[local-name()='code']">
+              <transform><xsl:value-of select="*/*[local-name()='code']"/></transform>
+            </case>
+            <case test="default"><transform><xsl:value-of select="*/rdfs:label"/></transform></case>
+          </switch>
+        </select>
+      </sf>
+      <!-\- Logic for $c was/is identical to $a, so just using the $a stuff here. -\->
+      <switch>
+        <case test="$vAcode = 'dlc'">
+            <sf code="c" repeatable="false"><transform><xsl:value-of select="translate($vAcode,$lower,$upper)"/></transform></sf>
+        </case>
+        <case test="$vAcode != ''">
+            <sf code="c" repeatable="false"><transform><xsl:value-of select="$vAcode"/></transform></sf>
+        </case>
+      </switch>
+      <switch>
+        <case test="count(../bf:descriptionModifier) &gt; 0">
+          <var name="vLastAgentUri">
+            <switch>
+              <case test="../bf:descriptionModifier[count(../bf:descriptionModifier)]/@rdf:resource">
+                <transform>
+                  <xsl:value-of select="../bf:descriptionModifier[count(../bf:descriptionModifier)]/@rdf:resource"/>
+                </transform>
+              </case>
+              <case test="../bf:descriptionModifier[count(../bf:descriptionModifier)]/*/@rdf:about">
+                <transform>
+                  <xsl:value-of select="../bf:descriptionModifier[count(../bf:descriptionModifier)]/*/@rdf:about"/>
+                </transform>
+              </case>
+            </switch>
+          </var>
+          <var name="vModifierCode">
+            <switch>
+              <case test="$vLastAgentUri != '' and contains($vLastAgentUri,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="$vLastAgentUri"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default">
+                <transform>
+                  <xsl:value-of select="../bf:descriptionModifier[count(../bf:descriptionModifier)]/*/*[local-name()='code']"/>
+                </transform>
+              </case>
+            </switch>
+          </var>
+          <switch>
+            <case test="$vModifierCode = 'dlc'">
+              <sf code="d"><transform><xsl:value-of select="translate($vModifierCode,$lower,$upper)"/></transform></sf>
+            </case>
+            <case test="$vModifierCode != ''">
+              <sf code="d"><transform><xsl:value-of select="$vModifierCode"/></transform></sf>
+            </case>
+          </switch>
+        </case>
+      </switch>
+    </context>
+  </df>
+  -->
+  
+  <switch>
+    <case test="$vAdminMetadata[bf:descriptionLevel or bf:descriptionConventions or bflc:encodingLevel]">
+      <df tag="040" repeatable="false">
+        <var name="vLanguageUri">
+          <switch>
+            <case test="$vAdminMetadata[bf:descriptionLevel or bf:descriptionConventions or bflc:encodingLevel]/bf:descriptionLanguage/@rdf:resource"><transform><xsl:value-of select="$vAdminMetadata/bf:descriptionLanguage/@rdf:resource"/></transform></case>
+            <case test="$vAdminMetadata[bf:descriptionLevel or bf:descriptionConventions or bflc:encodingLevel]/bf:descriptionLanguage/*/@rdf:about"><transform><xsl:value-of select="$vAdminMetadata/bf:descriptionLanguage/*/@rdf:about"/></transform></case>
+          </switch>
+        </var>
+        <var name="df040sfsPreNS">
+          <switch>
+            <case test="$vAdminMetadata/bflc:marcKey[starts-with(., '040')]">
+              <transform>
+                <xsl:call-template name="tParseMarcKey">
+                  <xsl:with-param name="pString" select="substring($vAdminMetadata/bflc:marcKey[starts-with(., '040')], 6)" />
+                </xsl:call-template>
+              </transform>
+            </case>
+            <case test="$vAdminMetadata/bf:note/bf:Note[rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/mnotetype/internal']/rdfs:label[starts-with(., '040')]">
+              <transform>
+                <xsl:call-template name="tParseMarcKey">
+                  <xsl:with-param name="pString" select="substring($vAdminMetadata/bf:note/bf:Note[rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/mnotetype/internal']/rdfs:label[starts-with(., '040')], 6)" />
+                </xsl:call-template>
+              </transform>
+            </case>
+          </switch>
+        </var>
+        <var name="df040sfs" xpath="exsl:node-set($df040sfsPreNS)" />
+        <ind1 default=" "/>
+        <ind2 default=" "/>
+        <var name="vAuri">
+          <switch>
+            <case test="$vAdminMetadata[bf:status/bf:Status[@rdf:about='http://id.loc.gov/vocabulary/mstatus/n']]/bf:agent//@rdf:*">
+              <transform>
+                <xsl:value-of select="$vAdminMetadata[bf:status/bf:Status[@rdf:about='http://id.loc.gov/vocabulary/mstatus/n']]/bf:agent//@rdf:*[1]"/>
+              </transform>
+            </case>
+            <case test="$vAdminMetadata/bf:assigner/@rdf:resource">
+              <transform>
+                <xsl:value-of select="$vAdminMetadata/bf:assigner/@rdf:resource"/>
+              </transform>
+            </case>
+            <case test="$vAdminMetadata/bf:assigner/*/@rdf:about">
+              <transform>
+                <xsl:value-of select="$vAdminMetadata/bf:assigner/*/@rdf:about"/>
+              </transform>
+            </case>
+          </switch>
+        </var>
+        <var name="vAcode">
+          <switch>
+            <case test="$vAdminMetadata[bf:status/bf:Status[@rdf:about='http://id.loc.gov/vocabulary/mstatus/n']]/bf:agent//bf:code">
+              <transform>
+                <xsl:value-of select="$vAdminMetadata[bf:status/bf:Status[@rdf:about='http://id.loc.gov/vocabulary/mstatus/n']]/bf:agent//bf:code"/>
+              </transform>
+            </case>
+            <case test="$vAdminMetadata/bf:assigner/*/*[local-name()='code']">
+              <transform>
+                <xsl:value-of select="$vAdminMetadata/bf:assigner/*/*[local-name()='code']"/>
+              </transform>
+            </case>
+            <case test="$vAuri != '' and contains($vAuri,'id.loc.gov')">
+              <transform>
+                <xsl:call-template name="tUriCode">
+                  <xsl:with-param name="pUri" select="$vAuri"/>
+                </xsl:call-template>
+              </transform>
+            </case>
+          </switch>
+        </var>
+        <switch>
+          <case test="$vAcode = 'dlc'">
+            <sf code="a" repeatable="false"><transform><xsl:value-of select="translate($vAcode,$lower,$upper)"/></transform></sf>
+          </case>
+          <case test="$vAcode != ''">
+            <sf code="a" repeatable="false"><transform><xsl:value-of select="$vAcode"/></transform></sf>
+          </case>
+        </switch>
+        <switch>
+          <case test="$vLanguageUri != '' and contains($vLanguageUri,'id.loc.gov')">
+            <sf code="b">
+              <transform>
+                <xsl:call-template name="tUriCode">
+                  <xsl:with-param name="pUri" select="$vLanguageUri"/>
+                </xsl:call-template>
+              </transform>
+            </sf>
+          </case>
+          <case test="$vAdminMetadata[bf:descriptionConventions or bflc:encodingLevel]/bf:descriptionLanguage/*/*[local-name()='code']">
+            <sf code="b">
+              <transform><xsl:value-of select="$vAdminMetadata[bf:descriptionConventions or bflc:encodingLevel]/bf:descriptionLanguage/*/*[local-name()='code']"/></transform>
+            </sf>
+          </case>
+        </switch>
+        <sf code="e">
+          <select xpath="$vAdminMetadata[bf:descriptionConventions or bflc:encodingLevel]/bf:descriptionConventions[not(contains(@rdf:resource,'isbd')) and
+                          not(contains(*/@rdf:about,'isbd')) and
+                          not(*/rdf:value='isbd') and
+                          not(*/*[local-name()='code']='isbd') and
+                          not(*/rdfs:label='isbd') and
+                          not(contains(@rdf:resource,'aacr')) and
+                          not(contains(*/@rdf:about,'aacr')) and
+                          not(*/rdf:value='aacr') and
+                          not(*/*[local-name()='code']='aacr') and
+                          not(*/rdfs:label='aacr')]">
+            <var name="vConvUri">
+              <switch>
+                <case test="@rdf:resource"><transform><xsl:value-of select="@rdf:resource"/></transform></case>
+                <case test="*/@rdf:about"><transform><xsl:value-of select="*/@rdf:about"/></transform></case>
+              </switch>
+            </var>
+            <switch>
+              <case test="$vConvUri != '' and contains($vConvUri,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="$vConvUri"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="*/rdf:value">
+                <transform><xsl:value-of select="*/rdf:value"/></transform>
+              </case>
+              <case test="*/*[local-name()='code']">
+                <transform><xsl:value-of select="*/*[local-name()='code']"/></transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="*/rdfs:label"/></transform></case>
+            </switch>
+          </select>
+        </sf>
+        <!-- Logic for $c: Look for the historical value.  If not found, use $a. -->
+        <switch>
+          <case test="$df040sfs//marc:subfield[@code='c']">
+            <sf code="c" repeatable="false"><transform><xsl:value-of select="$df040sfs//marc:subfield[@code='c'][1]"/></transform></sf>
+          </case>
+          <case test="$vAcode = 'dlc'">
+            <sf code="c" repeatable="false"><transform><xsl:value-of select="translate($vAcode,$lower,$upper)"/></transform></sf>
+          </case>
+          <case test="$vAcode != ''">
+            <sf code="c" repeatable="false"><transform><xsl:value-of select="$vAcode"/></transform></sf>
+          </case>
+        </switch>
+        <switch>
+          <case test="count($vAdminMetadata[bf:status/bf:Status[@rdf:about='http://id.loc.gov/vocabulary/mstatus/c']]) &gt; 0">
+            <transform>
+              <xsl:variable name="modifierCodePreNS">
+                <marc:codes>
+                  <xsl:for-each select="$df040sfs//marc:subfield[@code='d' and .!='']">
+                    <marc:modifierCode><xsl:value-of select="." /></marc:modifierCode>
+                  </xsl:for-each>
+                  <xsl:for-each select="$vAdminMetadata[bf:status/bf:Status[@rdf:about='http://id.loc.gov/vocabulary/mstatus/c']]">
+                    <xsl:sort select="bf:date" data-type="text" order="ascending" />
+                    <xsl:variable name="mCode">
+                      <xsl:choose>
+                        <xsl:when test="bf:descriptionModifier//bf:code">
+                          <xsl:value-of select="bf:descriptionModifier//bf:code" />
+                        </xsl:when>
+                        <xsl:when test="bf:agent//bf:code">
+                          <xsl:value-of select="bf:agent//bf:code" />
+                        </xsl:when>
+                        <xsl:when test="bf:descriptionModifier//@rdf:*[1]">
+                          <xsl:call-template name="tUriCode">
+                            <xsl:with-param name="pUri" select="bf:descriptionModifier//@rdf:*[1]"/>
+                          </xsl:call-template>
+                        </xsl:when>
+                        <xsl:when test="bf:agent//@rdf:*[1]">
+                          <xsl:call-template name="tUriCode">
+                            <xsl:with-param name="pUri" select="bf:agent//@rdf:*[1]"/>
+                          </xsl:call-template>
+                        </xsl:when>
+                        <xsl:when test="preceding::bf:AdminMetadata//bf:descriptionModifier//bf:code">
+                          <xsl:value-of select="preceding::bf:AdminMetadata//bf:descriptionModifier//bf:code" />
+                        </xsl:when>
+                        <xsl:when test="preceding::bf:AdminMetadata//bf:agent//bf:code">
+                          <xsl:value-of select="preceding::bf:AdminMetadata//bf:agent//bf:code" />
+                        </xsl:when>
+                        <xsl:when test="preceding::bf:AdminMetadata//bf:descriptionModifier//@rdf:*[1]">
+                          <xsl:call-template name="tUriCode">
+                            <xsl:with-param name="pUri" select="preceding::bf:AdminMetadata//bf:descriptionModifier//@rdf:*[1]"/>
+                          </xsl:call-template>
+                        </xsl:when>
+                        <xsl:when test="preceding::bf:AdminMetadata//bf:agent//@rdf:*[1]">
+                          <xsl:call-template name="tUriCode">
+                            <xsl:with-param name="pUri" select="preceding::bf:AdminMetadata//bf:agent//@rdf:*[1]"/>
+                          </xsl:call-template>
+                        </xsl:when>
+                      </xsl:choose>
+                  </xsl:variable>
+                  <xsl:if test="$mCode != ''">
+                    <marc:modifierCode>
+                      <xsl:choose>
+                        <xsl:when test="$mCode = 'dlc'">DLC</xsl:when>
+                        <xsl:when test="$mCode = 'dlcmrc'">DLC-MRC</xsl:when>
+                        <xsl:otherwise><xsl:value-of select="$mCode" /></xsl:otherwise>
+                      </xsl:choose>
+                    </marc:modifierCode>
+                  </xsl:if>
+                </xsl:for-each>
+                </marc:codes>
+              </xsl:variable>
+              <xsl:variable name="modifierCodes" select="exsl:node-set($modifierCodePreNS)" />
+              <xsl:for-each select="$modifierCodes//marc:modifierCode[not(.=preceding::*[1])]">
+                <marc:subfield code="d"><xsl:value-of select="." /></marc:subfield>
+              </xsl:for-each>
+            </transform>
+          </case>
+          <case test="count($vAdminMetadata/bf:descriptionModifier) &gt; 0">
+            <var name="vLastAgentUri">
+              <switch>
+                <case test="$vAdminMetadata/bf:descriptionModifier[count($vAdminMetadata/bf:descriptionModifier)]/@rdf:resource">
+                  <transform>
+                    <xsl:value-of select="$vAdminMetadata/bf:descriptionModifier[count($vAdminMetadata/bf:descriptionModifier)]/@rdf:resource"/>
+                  </transform>
+                </case>
+                <case test="$vAdminMetadata/bf:descriptionModifier[count($vAdminMetadata/bf:descriptionModifier)]/*/@rdf:about">
+                  <transform>
+                    <xsl:value-of select="$vAdminMetadata/bf:descriptionModifier[count($vAdminMetadata/bf:descriptionModifier)]/*/@rdf:about"/>
+                  </transform>
+                </case>
+              </switch>
+            </var>
+            <var name="vModifierCode">
+              <switch>
+                <case test="$vAdminMetadata/bf:descriptionModifier[count($vAdminMetadata/bf:descriptionModifier)]/*/*[local-name()='code']">
+                  <transform>
+                    <xsl:value-of select="$vAdminMetadata/bf:descriptionModifier[count($vAdminMetadata/bf:descriptionModifier)]/*/*[local-name()='code']"/>
+                  </transform>
+                </case>
+                <case test="$vLastAgentUri != '' and contains($vLastAgentUri,'id.loc.gov')">
+                  <transform>
+                    <xsl:call-template name="tUriCode">
+                      <xsl:with-param name="pUri" select="$vLastAgentUri"/>
+                    </xsl:call-template>
+                  </transform>
+                </case>
+                <case test="default">
+                  <transform>
+                    <xsl:value-of select="$vAdminMetadata/bf:descriptionModifier[count($vAdminMetadata/bf:descriptionModifier)]/*/*[local-name()='code']"/>
+                  </transform>
+                </case>
+              </switch>
+            </var>
+            <switch>
+              <case test="$vModifierCode = 'dlc'">
+                <sf code="d"><transform><xsl:value-of select="translate($vModifierCode,$lower,$upper)"/></transform></sf>
+              </case>
+              <case test="$vModifierCode != ''">
+                <sf code="d"><transform><xsl:value-of select="$vModifierCode"/></transform></sf>
+              </case>
+            </switch>
+          </case>
+        </switch>
+      </df>
+    </case>
+  </switch>
+
+  <switch>
+    <case test="bf:Work/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/languages') and not(contains(., '/zxx'))] or 
+                bf:Work/bf:language/*/*[not(bf:source)]">
+      <var name="vAllLangElements" xpath="
+        bf:Work/bf:language/@rdf:resource[contains(., 'id.loc.gov/vocabulary/languages')] |
+        bf:Work/bf:language/bf:Language[not(bf:source) and not(bf:part)]//@rdf:about[contains(., 'id.loc.gov/vocabulary/languages')] | 
+        bf:Work/bf:language/bf:Language[not(bf:source) and not(bf:part) and not(@rdf:about)] | 
+        bf:Work/bf:language/bf:Language[not(bf:source) and bf:part] |
+        bf:Work/bf:accompaniedBy/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/languages')][1] |
+        bf:Work/bf:note/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/languages')][1]
+        " />
+      <switch>
+        <case test="count($vAllLangElements) > 1">
+      <df tag="041">
+        <ind1 default="0">
+          <switch>
+            <case test="bf:Work/bf:note/bf:Note/rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/resourceComponents/otx'">1</case>
+            <case test="bf:Work/bf:note/bf:Note/rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/resourceComponents/sub'">1</case>
+            <case test="bf:Work/bf:note/bf:Note/rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/resourceComponents/itr'">1</case>
+            <case test="bf:Work/bf:note/bf:Note[rdfs:label='Includes translation or is translation']">1</case>
+            <case test="bf:Work/bf:note/bf:Note[rdfs:label='Includes translation']">1</case>
+          </switch>
+        </ind1>
+        <ind2 default=" "/>
+        <!-- making dubious assertion that first language property is primary -->
+        <transform>
+          <xsl:variable name="vLangElements" select="bf:Work/bf:language/@rdf:resource[contains(., 'id.loc.gov/vocabulary/languages')] |
+                                                     bf:Work/bf:language/bf:Language[not(bf:source) and not(bf:part)]//@rdf:about[contains(., 'id.loc.gov/vocabulary/languages')] | 
+                                                     bf:Work/bf:language/bf:Language[not(bf:source) and not(bf:part) and not(@rdf:about)] | 
+                                                     bf:Work/bf:language/bf:Language[not(bf:source) and bf:part]"/>
+          <xsl:variable name="vFirstLangCode">
+            <xsl:choose>
+              <xsl:when test="starts-with($vLangElements[1],'http://id.loc.gov/vocabulary/languages/')">
+                <xsl:value-of select="substring-after($vLangElements[1],'http://id.loc.gov/vocabulary/languages/')"/>
+              </xsl:when>
+              <xsl:when test="$vLangElements[1]/madsrdf:code">
+                <xsl:value-of select="$vLangElements[1]/madsrdf:code"/>
+              </xsl:when>
+              <xsl:when test="starts-with($vLangElements[1]/rdf:value,'http://id.loc.gov/vocabulary/languages/')">
+                <xsl:value-of select="substring-after($vLangElements[1]/rdf:value,'http://id.loc.gov/vocabulary/languages/')"/>
+              </xsl:when>
+              <xsl:when test="starts-with($vLangElements[1]/rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')">
+                <xsl:value-of select="substring-after($vLangElements[1]/rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')"/>
+              </xsl:when>
+              <xsl:when test="$vLangElements[1]/rdf:value"><xsl:value-of select="$vLangElements[1]/rdf:value"/></xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="$vLangElements[1]/rdfs:label"/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:variable>
+          
+         <xsl:for-each select="$vAllLangElements">
+          <xsl:choose>
+            <xsl:when test="position() = 1 and $vFirstLangCode!='zxx'">
+              <marc:subfield code="a"><xsl:value-of select="$vFirstLangCode"/></marc:subfield>
+            </xsl:when>
+            <xsl:when test="position() = 1 and $vFirstLangCode='zxx'" />
+            <xsl:otherwise>
+                <xsl:variable name="vLangCode">
+                  <xsl:choose>
+                    <xsl:when test="starts-with(.,'http://id.loc.gov/vocabulary/languages/')">
+                      <xsl:value-of select="substring-after(.,'http://id.loc.gov/vocabulary/languages/')"/>
+                    </xsl:when>
+                    <xsl:when test="madsrdf:code">
+                      <xsl:value-of select="madsrdf:code"/>
+                    </xsl:when>
+                    <xsl:when test="starts-with(rdf:value,'http://id.loc.gov/vocabulary/languages/')">
+                      <xsl:value-of select="substring-after(rdf:value,'http://id.loc.gov/vocabulary/languages/')"/>
+                    </xsl:when>
+                    <xsl:when test="starts-with(rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')">
+                      <xsl:value-of select="substring-after(rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')"/>
+                    </xsl:when>
+                    <xsl:when test="rdf:value"><xsl:value-of select="rdf:value"/></xsl:when>
+                    <xsl:otherwise>
+                      <xsl:value-of select="rdfs:label"/>
+                    </xsl:otherwise>
+                  </xsl:choose>
+                </xsl:variable>
+                <xsl:if test="$vLangCode != ''">
+                  <xsl:variable name="vtype" select="ancestor::bf:accompaniedBy/bf:*/rdf:type/@rdf:resource[contains(., 'id.loc.gov/vocabulary/resourceComponents')]|ancestor::bf:note/bf:*/rdf:type/@rdf:resource[contains(., 'id.loc.gov/vocabulary/resourceComponents')]" />
+                  <xsl:variable name="vSFcode">
+                    <xsl:choose>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/res'">a</xsl:when>      
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/str'">a</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/sum'">b</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/stx'">d</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/lib'">e</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/toc'">f</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/amt'">g</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/otx'">h</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/int'">i</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/sub'">j</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/itr'">k</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/olb'">n</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/amt'">m</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/cap'">p</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/aud'">q</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/vis'">r</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/tav'">t</xsl:when>
+                      
+                      <xsl:when test="bf:part='summary'">b</xsl:when>
+                      <xsl:when test="bf:part='sung or spoken text'">d</xsl:when>
+                      <xsl:when test="bf:part='libretto'">e</xsl:when>
+                      <xsl:when test="bf:part='table of contents'">f</xsl:when>
+                      <xsl:when test="bf:part='accompanying material'">g</xsl:when>
+                      <xsl:when test="bf:part='original'">h</xsl:when>
+                      <xsl:when test="bf:part='intertitles'">i</xsl:when>
+                      <xsl:when test="bf:part='subtitles or captions'">j</xsl:when>
+                      <xsl:when test="bf:part='intermediate translations'">k</xsl:when>
+                      <xsl:when test="bf:part='original accompanying materials'">m</xsl:when>
+                      <xsl:when test="bf:part='original libretto'">n</xsl:when>
+                      <xsl:when test="bf:part='captions'">p</xsl:when>
+                      <xsl:when test="bf:part='accessible audio'">q</xsl:when>
+                      <xsl:when test="bf:part='accessible visual material'">r</xsl:when>
+                      <xsl:when test="bf:part='accompanying transcripts'">t</xsl:when>
+
+                      <xsl:otherwise>a</xsl:otherwise>
+                    </xsl:choose>
+                  </xsl:variable>
+                  <marc:subfield>
+                    <xsl:attribute name="code"><xsl:value-of select="$vSFcode" /></xsl:attribute>
+                    <xsl:value-of select="$vLangCode"/>
+                  </marc:subfield>
+                </xsl:if>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:for-each>
+        </transform>
+      </df>
+        </case>
+      </switch>
+    </case>
+    <!-- 
+        Sometimes there may be a an accompaniedBy language or note language but no 'regular' or basic language.
+    -->
+    <case test="(
+                  bf:Work/bf:accompaniedBy/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/languages')] or 
+                  bf:Work/bf:note/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/languages')]
+                ) and 
+                not(bf:Work/bf:language)">
+      <df tag="041">
+        <ind1 default="0">
+          <switch>
+            <case test="bf:Work/bf:note/bf:Note/rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/resourceComponents/otx'">1</case>
+            <case test="bf:Work/bf:note/bf:Note/rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/resourceComponents/sub'">1</case>
+            <case test="bf:Work/bf:note/bf:Note/rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/resourceComponents/itr'">1</case>
+            <case test="bf:Work/bf:note/bf:Note[rdfs:label='Includes translation or is translation']">1</case>
+            <case test="bf:Work/bf:note/bf:Note[rdfs:label='Includes translation']">1</case>
+          </switch>
+        </ind1>
+        <ind2 default=" "/>
+        <transform>
+          <xsl:for-each select="
+                  bf:Work/bf:accompaniedBy/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/languages')] | 
+                  bf:Work/bf:note/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/languages')]">
+            <xsl:variable name="vLangCode">
+              <xsl:choose>
+                <xsl:when test="starts-with(.,'http://id.loc.gov/vocabulary/languages/')">
+                  <xsl:value-of select="substring-after(.,'http://id.loc.gov/vocabulary/languages/')"/>
+                </xsl:when>
+                <xsl:when test="madsrdf:code">
+                  <xsl:value-of select="madsrdf:code"/>
+                </xsl:when>
+                <xsl:when test="starts-with(rdf:value,'http://id.loc.gov/vocabulary/languages/')">
+                  <xsl:value-of select="substring-after(rdf:value,'http://id.loc.gov/vocabulary/languages/')"/>
+                </xsl:when>
+                <xsl:when test="starts-with(rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')">
+                  <xsl:value-of select="substring-after(rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')"/>
+                </xsl:when>
+                <xsl:when test="rdf:value"><xsl:value-of select="rdf:value"/></xsl:when>
+                <xsl:otherwise>
+                  <xsl:value-of select="rdfs:label"/>
+                </xsl:otherwise>
+              </xsl:choose>
+            </xsl:variable>
+            <xsl:if test="$vLangCode != ''">
+              <xsl:variable name="vtype" select="ancestor::bf:accompaniedBy/bf:*/rdf:type/@rdf:resource[contains(., 'id.loc.gov/vocabulary/resourceComponents')]|ancestor::bf:note/bf:*/rdf:type/@rdf:resource[contains(., 'id.loc.gov/vocabulary/resourceComponents')]" />
+              <xsl:variable name="vSFcode">
+                <xsl:choose>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/res'">a</xsl:when>      
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/str'">a</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/sum'">b</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/stx'">d</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/lib'">e</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/toc'">f</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/amt'">g</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/otx'">h</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/int'">i</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/sub'">j</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/itr'">k</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/olb'">n</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/amt'">m</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/cap'">p</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/aud'">q</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/vis'">r</xsl:when>
+                  <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/tav'">t</xsl:when>
+                  
+                  <xsl:when test="bf:part='summary'">b</xsl:when>
+                  <xsl:when test="bf:part='sung or spoken text'">d</xsl:when>
+                  <xsl:when test="bf:part='libretto'">e</xsl:when>
+                  <xsl:when test="bf:part='table of contents'">f</xsl:when>
+                  <xsl:when test="bf:part='accompanying material'">g</xsl:when>
+                  <xsl:when test="bf:part='original'">h</xsl:when>
+                  <xsl:when test="bf:part='intertitles'">i</xsl:when>
+                  <xsl:when test="bf:part='subtitles or captions'">j</xsl:when>
+                  <xsl:when test="bf:part='intermediate translations'">k</xsl:when>
+                  <xsl:when test="bf:part='original accompanying materials'">m</xsl:when>
+                  <xsl:when test="bf:part='original libretto'">n</xsl:when>
+                  <xsl:when test="bf:part='captions'">p</xsl:when>
+                  <xsl:when test="bf:part='accessible audio'">q</xsl:when>
+                  <xsl:when test="bf:part='accessible visual material'">r</xsl:when>
+                  <xsl:when test="bf:part='accompanying transcripts'">t</xsl:when>
+                  
+                  <xsl:otherwise>a</xsl:otherwise>
+                </xsl:choose>
+              </xsl:variable>
+              <marc:subfield>
+                <xsl:attribute name="code"><xsl:value-of select="$vSFcode" /></xsl:attribute>
+                <xsl:value-of select="$vLangCode"/>
+              </marc:subfield>
+            </xsl:if>
+          </xsl:for-each>
+        </transform>
+      </df>
+    </case>                
+    </switch>
+
+  <switch>
+    <case test="
+        bf:Work/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/iso639-')] or 
+        bf:Work/bf:language/*/bf:source or 
+        bf:Work/bf:accompaniedBy/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/iso639-')] or
+        bf:Work/bf:note/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/iso639-')]
+        ">
+      <df tag="041">
+        <ind1 default="0">
+          <switch>
+            <case test="bf:Work/bf:note/bf:Note[rdfs:label='Includes translation or is translation']">1</case>
+            <case test="bf:Work/bf:note/bf:Note[rdfs:label='Includes translation']">1</case>
+          </switch>
+        </ind1>
+        <ind2 default="7"/>
+        <!-- making dubious assertion that first language property is primary -->
+        <transform>
+          <xsl:variable name="vLangElements" select="
+            bf:Work/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/iso639-')] |
+            bf:Work/bf:language/bf:Language[bf:source and not(bf:part)]//@rdf:about[not(contains(., 'id.loc.gov/vocabulary/'))] | 
+            bf:Work/bf:language/bf:Language[bf:source] | 
+            bf:Work/bf:language/bf:Language[bf:source and bf:part]"/>
+          <xsl:variable name="vFirstLangCode">
+            <xsl:choose>
+              <xsl:when test="starts-with($vLangElements[1],'http://id.loc.gov/vocabulary/iso639-1/')">
+                <xsl:value-of select="substring-after($vLangElements[1],'http://id.loc.gov/vocabulary/iso639-1/')"/>
+              </xsl:when>
+              <xsl:when test="starts-with($vLangElements[1],'http://id.loc.gov/vocabulary/iso639-2/')">
+                <xsl:value-of select="substring-after($vLangElements[1],'http://id.loc.gov/vocabulary/iso639-2/')"/>
+              </xsl:when>
+              <xsl:when test="starts-with($vLangElements[1],'http://id.loc.gov/vocabulary/iso639-3/')">
+                <xsl:value-of select="substring-after($vLangElements[1],'http://id.loc.gov/vocabulary/iso639-3/')"/>
+              </xsl:when>
+              <xsl:when test="starts-with($vLangElements[1],'http://id.loc.gov/vocabulary/iso639-5/')">
+                <xsl:value-of select="substring-after($vLangElements[1],'http://id.loc.gov/vocabulary/iso639-5/')"/>
+              </xsl:when>
+              <xsl:when test="$vLangElements[1]/madsrdf:code">
+                <xsl:value-of select="$vLangElements[1]/madsrdf:code"/>
+              </xsl:when>
+              <xsl:when test="starts-with($vLangElements[1]/rdf:value,'http://id.loc.gov/vocabulary/languages/')">
+                <xsl:value-of select="substring-after($vLangElements[1]/rdf:value,'http://id.loc.gov/vocabulary/languages/')"/>
+              </xsl:when>
+              <xsl:when test="starts-with($vLangElements[1]/rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')">
+                <xsl:value-of select="substring-after($vLangElements[1]/rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')"/>
+              </xsl:when>
+              <xsl:when test="$vLangElements[1]/rdf:value"><xsl:value-of select="$vLangElements[1]/rdf:value"/></xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="$vLangElements[1]/rdfs:label"/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:variable>
+          
+          <xsl:for-each select="$vLangElements|
+            bf:Work/bf:accompaniedBy/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/iso639-')][1] |
+            bf:Work/bf:note/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/iso639-')][1]">
+            <xsl:choose>
+              <xsl:when test="position() = 1 and $vFirstLangCode!=''">
+                <marc:subfield code="a"><xsl:value-of select="$vFirstLangCode"/></marc:subfield>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:variable name="vLangCode">
+                  <xsl:choose>
+                    <xsl:when test="starts-with(.,'http://id.loc.gov/vocabulary/iso639-1/')">
+                      <xsl:value-of select="substring-after(.,'http://id.loc.gov/vocabulary/iso639-1/')"/>
+                    </xsl:when>
+                    <xsl:when test="starts-with(.,'http://id.loc.gov/vocabulary/iso639-2/')">
+                      <xsl:value-of select="substring-after(.,'http://id.loc.gov/vocabulary/iso639-2/')"/>
+                    </xsl:when>
+                    <xsl:when test="starts-with(.,'http://id.loc.gov/vocabulary/iso639-3/')">
+                      <xsl:value-of select="substring-after(.,'http://id.loc.gov/vocabulary/iso639-3/')"/>
+                    </xsl:when>
+                    <xsl:when test="starts-with(.,'http://id.loc.gov/vocabulary/iso639-5/')">
+                      <xsl:value-of select="substring-after(.,'http://id.loc.gov/vocabulary/iso639-5/')"/>
+                    </xsl:when>
+                    <xsl:when test="madsrdf:code">
+                      <xsl:value-of select="madsrdf:code"/>
+                    </xsl:when>
+                    <xsl:when test="rdf:value"><xsl:value-of select="rdf:value"/></xsl:when>
+                    <xsl:otherwise>
+                      <xsl:value-of select="rdfs:label"/>
+                    </xsl:otherwise>
+                  </xsl:choose>
+                </xsl:variable>
+                <xsl:if test="$vLangCode != ''">
+                  <xsl:variable name="vtype" select="ancestor::bf:accompaniedBy/bf:*/rdf:type/@rdf:resource[contains(., 'id.loc.gov/vocabulary/resourceComponents')]|ancestor::bf:note/bf:*/rdf:type/@rdf:resource[contains(., 'id.loc.gov/vocabulary/resourceComponents')]" />
+                  <xsl:variable name="vSFcode">
+                    <xsl:choose>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/res'">a</xsl:when>      
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/str'">a</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/sum'">b</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/stx'">d</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/lib'">e</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/toc'">f</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/amt'">g</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/otx'">h</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/int'">i</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/sub'">j</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/itr'">k</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/olb'">n</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/amt'">m</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/olb'">p</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/aud'">q</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/vis'">r</xsl:when>
+                      <xsl:when test="$vtype='http://id.loc.gov/vocabulary/resourceComponents/tav'">t</xsl:when>
+                      
+                      <xsl:when test="bf:part='summary'">b</xsl:when>
+                      <xsl:when test="bf:part='sung or spoken text'">d</xsl:when>
+                      <xsl:when test="bf:part='libretto'">e</xsl:when>
+                      <xsl:when test="bf:part='table of contents'">f</xsl:when>
+                      <xsl:when test="bf:part='accompanying material'">g</xsl:when>
+                      <xsl:when test="bf:part='original'">h</xsl:when>
+                      <xsl:when test="bf:part='intertitles'">i</xsl:when>
+                      <xsl:when test="bf:part='subtitles or captions'">j</xsl:when>
+                      <xsl:when test="bf:part='intermediate translations'">k</xsl:when>
+                      <xsl:when test="bf:part='original accompanying materials'">m</xsl:when>
+                      <xsl:when test="bf:part='original libretto'">n</xsl:when>
+                      <xsl:when test="bf:part='captions'">p</xsl:when>
+                      <xsl:when test="bf:part='accessible audio'">q</xsl:when>
+                      <xsl:when test="bf:part='accessible visual material'">r</xsl:when>
+                      <xsl:when test="bf:part='accompanying transcripts'">t</xsl:when>
+                      
+                      <xsl:otherwise>a</xsl:otherwise>
+                    </xsl:choose>
+                  </xsl:variable>
+                  <marc:subfield>
+                    <xsl:attribute name="code"><xsl:value-of select="$vSFcode" /></xsl:attribute>
+                    <xsl:value-of select="$vLangCode"/>
+                  </marc:subfield>
+                </xsl:if>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:for-each>
+        </transform>
+        
+        <var name="vSourceLang" xpath="bf:Work/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/iso639-')]|
+                                       bf:Work/bf:accompaniedBy/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/iso639-')] |
+                                       bf:Work/bf:note/bf:*[contains(rdf:type/@rdf:resource, 'id.loc.gov/vocabulary/resourceComponents')]/bf:language//@rdf:*[contains(., 'id.loc.gov/vocabulary/iso639-')] |
+                                       bf:Work/bf:language/bf:Language[bf:source//@rdf:*[not(contains(., 'id.loc.gov/vocabulary/'))]]|
+                                       bf:Work/bf:language/bf:Language[bf:source]" />
+        <var name="vSourceUri">
+          <switch>
+            <case test="contains($vSourceLang[1], 'id.loc.gov/vocabulary/iso639-')"><transform><xsl:value-of select="$vSourceLang[1]"/></transform></case>
+            <case test="$vSourceLang[1]/bf:source/@rdf:resource"><transform><xsl:value-of select="$vSourceLang[1]/bf:source/@rdf:resource"/></transform></case>
+            <case test="$vSourceLang[1]/bf:source/bf:Source/@rdf:about"><transform><xsl:value-of select="$vSourceLang[1]/bf:source/bf:Source/@rdf:about"/></transform></case>
+          </switch>
+        </var>
+        <transform>
+            <marc:subfield code="2">
+              <xsl:choose>
+                <xsl:when test="$vSourceUri != ''">
+                  <xsl:choose>
+                    <xsl:when test="contains($vSourceUri,'id.loc.gov/vocabulary/iso639-1')">iso639-1</xsl:when>
+                    <xsl:when test="contains($vSourceUri,'id.loc.gov/vocabulary/iso639-2')">iso639-2</xsl:when>
+                    <xsl:when test="contains($vSourceUri,'id.loc.gov/vocabulary/iso639-3')">iso639-3</xsl:when>
+                  </xsl:choose>
+                </xsl:when>
+                <xsl:when test="$vSourceLang[1]/bf:source/bf:Source/*[local-name()='code']">
+                  <xsl:value-of select="$vSourceLang[1]/bf:source/bf:Source/*[local-name()='code']"/>
+                </xsl:when>
+                <xsl:when test="$vSourceLang[1]/bf:source/madsrdf:Authority/*[local-name()='code']">
+                  <xsl:value-of select="$vSourceLang[1]/bf:source/madsrdf:Authority/*[local-name()='code']"/>
+                </xsl:when>
+                <xsl:otherwise>
+                  <xsl:call-template name="tChopPunct">
+                    <xsl:with-param name="pString" select="$vSourceLang[1]/bf:source/bf:Source/rdfs:label"/>
+                  </xsl:call-template>
+                </xsl:otherwise>
+              </xsl:choose>
+            </marc:subfield>
+          
+        </transform>
+        
+      </df>
+    </case>
+    
+  </switch>
+
+  <!--
+  <switch>
+    <case test="bf:Work[count(bf:language/bf:Language[not(bf:source)])&gt;1]">
+      <df tag="041">
+        <ind1 default=" ">
+          <switch>
+            <case test="bf:Work/bf:note/bf:Note[rdfs:label='Includes translation']">1</case>
+          </switch>
+        </ind1>
+        <ind2 default=" "/>
+        <!- - making dubious assertion that first language property is primary - ->
+        <transform>
+          <xsl:variable name="vPrimaryLangElement" select="bf:Work/bf:language/bf:Language[not(bf:source) and not(bf:part)][1]"/>
+          <xsl:variable name="vPrimaryLang">
+            <xsl:choose>
+              <xsl:when test="starts-with($vPrimaryLangElement/@rdf:about,'http://id.loc.gov/vocabulary/languages/')">
+                <xsl:value-of select="substring-after($vPrimaryLangElement/@rdf:about,'http://id.loc.gov/vocabulary/languages/')"/>
+              </xsl:when>
+              <xsl:when test="$vPrimaryLangElement/madsrdf:code">
+                <xsl:value-of select="$vPrimaryLangElement/madsrdf:code"/>
+              </xsl:when>
+              <xsl:when test="starts-with($vPrimaryLangElement/rdf:value,'http://id.loc.gov/vocabulary/languages/')">
+                <xsl:value-of select="substring-after($vPrimaryLangElement/rdf:value,'http://id.loc.gov/vocabulary/languages/')"/>
+              </xsl:when>
+              <xsl:when test="starts-with($vPrimaryLangElement/rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')">
+                <xsl:value-of select="substring-after($vPrimaryLangElement/rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')"/>
+              </xsl:when>
+              <xsl:when test="$vPrimaryLangElement/rdf:value"><xsl:value-of select="$vPrimaryLangElement/rdf:value"/></xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="$vPrimaryLangElement/rdfs:label"/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:variable>
+          <xsl:for-each select="bf:Work/bf:language/bf:Language[not(bf:source) and not(bf:part)]">
+            <xsl:choose>
+              <xsl:when test="position() = 1">
+                <marc:subfield code="a"><xsl:value-of select="$vPrimaryLang"/></marc:subfield>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:variable name="vCurrentLang">
+                  <xsl:choose>
+                    <xsl:when test="starts-with(@rdf:about,'http://id.loc.gov/vocabulary/languages/')">
+                      <xsl:value-of select="substring-after(@rdf:about,'http://id.loc.gov/vocabulary/languages/')"/>
+                    </xsl:when>
+                    <xsl:when test="madsrdf:code">
+                      <xsl:value-of select="madsrdf:code"/>
+                    </xsl:when>
+                    <xsl:when test="starts-with(rdf:value,'http://id.loc.gov/vocabulary/languages/')">
+                      <xsl:value-of select="substring-after(rdf:value,'http://id.loc.gov/vocabulary/languages/')"/>
+                    </xsl:when>
+                    <xsl:when test="starts-with($vPrimaryLangElement/rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')">
+                      <xsl:value-of select="substring-after(rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')"/>
+                    </xsl:when>
+                    <xsl:when test="rdf:value"><xsl:value-of select="rdf:value"/></xsl:when>
+                    <xsl:when test="rdfs:label"><xsl:value-of select="rdfs:label"/></xsl:when>
+                  </xsl:choose>
+                </xsl:variable>
+                <xsl:choose>
+                  <xsl:when test="$vCurrentLang != '' and $vCurrentLang != $vPrimaryLang">
+                    <marc:subfield code="a"><xsl:value-of select="$vCurrentLang"/></marc:subfield>
+                  </xsl:when>
+                </xsl:choose>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:for-each>
+        </transform>
+        <select xpath="bf:Work/bf:language/bf:Language[not(bf:source) and bf:part]">
+          <transform>
+            <xsl:variable name="vSubfield">
+              <xsl:choose>
+                <xsl:when test="bf:part='summary'">b</xsl:when>
+                <xsl:when test="bf:part='sung or spoken text'">d</xsl:when>
+                <xsl:when test="bf:part='libretto'">e</xsl:when>
+                <xsl:when test="bf:part='table of contents'">f</xsl:when>
+                <xsl:when test="bf:part='accompanying material'">g</xsl:when>
+                <xsl:when test="bf:part='original'">h</xsl:when>
+                <xsl:when test="bf:part='intertitles'">i</xsl:when>
+                <xsl:when test="bf:part='subtitles or captions'">j</xsl:when>
+                <xsl:when test="bf:part='intermediate translations'">k</xsl:when>
+                <xsl:when test="bf:part='original accompanying materials'">m</xsl:when>
+                <xsl:when test="bf:part='original libretto'">n</xsl:when>
+                <xsl:when test="bf:part='captions'">p</xsl:when>
+                <xsl:when test="bf:part='accessible audio'">q</xsl:when>
+                <xsl:when test="bf:part='accessible visual material'">r</xsl:when>
+                <xsl:when test="bf:part='accompanying transcripts'">t</xsl:when>
+                <xsl:otherwise>a</xsl:otherwise>
+              </xsl:choose>
+            </xsl:variable>
+            <marc:subfield>
+              <xsl:attribute name="code"><xsl:value-of select="$vSubfield"/></xsl:attribute>
+              <xsl:choose>
+                <xsl:when test="starts-with(@rdf:about,'http://id.loc.gov/vocabulary/languages/')">
+                  <xsl:value-of select="substring-after(@rdf:about,'http://id.loc.gov/vocabulary/languages/')"/>
+                </xsl:when>
+                <xsl:when test="madsrdf:code"><xsl:value-of select="madsrdf:code"/></xsl:when>
+                <xsl:when test="starts-with(rdf:value,'http://id.loc.gov/vocabulary/languages/')">
+                  <xsl:value-of select="substring-after(rdf:value,'http://id.loc.gov/vocabulary/languages/')"/>
+                </xsl:when>
+                <xsl:when test="starts-with(rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')">
+                  <xsl:value-of select="substring-after(rdf:value/@rdf:resource,'http://id.loc.gov/vocabulary/languages/')"/>
+                </xsl:when>
+                <xsl:when test="rdf:value"><xsl:value-of select="rdf:value"/></xsl:when>
+                <xsl:otherwise>
+                  <xsl:call-template name="tChopPunct">
+                    <xsl:with-param name="pString" select="rdfs:label"/>
+                  </xsl:call-template>
+                </xsl:otherwise>
+              </xsl:choose>
+            </marc:subfield>
+          </transform>
+        </select>
+      </df>
+    </case>
+  </switch>
+
+  <df tag="041">
+    <context xpath="bf:Work/bf:language/bf:Language[bf:source]">
+      <var name="vSourceUri">
+        <switch>
+          <case test="bf:source/@rdf:resource"><transform><xsl:value-of select="bf:source/@rdf:resource"/></transform></case>
+          <case test="bf:source/bf:Source/@rdf:about"><transform><xsl:value-of select="bf:source/bf:Source/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <select xpath=".">
+        <transform>
+          <xsl:variable name="vSubfield">
+            <xsl:choose>
+              <xsl:when test="bf:part='summary'">b</xsl:when>
+              <xsl:when test="bf:part='sung or spoken text'">d</xsl:when>
+              <xsl:when test="bf:part='libretto'">e</xsl:when>
+              <xsl:when test="bf:part='table of contents'">f</xsl:when>
+              <xsl:when test="bf:part='accompanying material'">g</xsl:when>
+              <xsl:when test="bf:part='original'">h</xsl:when>
+              <xsl:when test="bf:part='intertitles'">i</xsl:when>
+              <xsl:when test="bf:part='subtitles or captions'">j</xsl:when>
+              <xsl:when test="bf:part='intermediate translations'">k</xsl:when>
+              <xsl:when test="bf:part='original accompanying materials'">m</xsl:when>
+              <xsl:when test="bf:part='original libretto'">n</xsl:when>
+              <xsl:when test="bf:part='captions'">p</xsl:when>
+              <xsl:when test="bf:part='accessible audio'">q</xsl:when>
+              <xsl:when test="bf:part='accessible visual material'">r</xsl:when>
+              <xsl:when test="bf:part='accompanying transcripts'">t</xsl:when>
+              <xsl:otherwise>a</xsl:otherwise>
+            </xsl:choose>
+          </xsl:variable>
+          <marc:subfield>
+            <xsl:attribute name="code"><xsl:value-of select="$vSubfield"/></xsl:attribute>
+            <xsl:value-of select="rdf:value"/>
+          </marc:subfield>
+          <marc:subfield code="2">
+            <xsl:choose>
+              <xsl:when test="bf:source/bf:Source/*[local-name()='code']">
+                <xsl:value-of select="bf:source/bf:Source/*[local-name()='code']"/>
+              </xsl:when>
+              <xsl:when test="$vSourceUri != ''">
+                <xsl:choose>
+                  <xsl:when test="contains($vSourceUri,'id.loc.gov')">
+                    <xsl:call-template name="tUriCode">
+                      <xsl:with-param name="pUri" select="$vSourceUri"/>
+                    </xsl:call-template>
+                  </xsl:when>
+                  <xsl:otherwise><xsl:value-of select="$vSourceUri"/></xsl:otherwise>
+                </xsl:choose>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:call-template name="tChopPunct">
+                  <xsl:with-param name="pString" select="bf:source/bf:Source/rdfs:label"/>
+                </xsl:call-template>
+              </xsl:otherwise>
+            </xsl:choose>
+          </marc:subfield>
+        </transform>
+      </select>
+    </context>
+  </df>
+        -->
+
+  <switch>
+    <case test="$vAdminMetadata/bf:descriptionAuthentication">
+      <df tag="042" repeatable="false">
+        <ind1 default=" "/>
+        <ind2 default=" "/>
+        <sf code="a">
+          <select xpath="$vAdminMetadata/bf:descriptionAuthentication">
+            <switch>
+              <case test="*/rdf:value">
+                <transform><xsl:value-of select="*/rdf:value"/></transform>
+              </case>
+              <case test="*/*[local-name()='code']">
+                <transform><xsl:value-of select="*/*[local-name()='code']"/></transform>
+              </case>
+              <case test="starts-with(*/@rdf:about,'http://id.loc.gov/vocabulary/marcauthen/')">
+                <transform><xsl:value-of select="substring-after(*/@rdf:about,'http://id.loc.gov/vocabulary/marcauthen/')"/></transform>
+              </case>
+              <case test="starts-with(@rdf:resource,'http://id.loc.gov/vocabulary/marcauthen/')">
+                <transform><xsl:value-of select="substring-after(@rdf:resource,'http://id.loc.gov/vocabulary/marcauthen/')"/></transform>
+              </case>
+              <case test="default">
+                <transform>
+                  <xsl:message>Record <xsl:value-of select="$vRecordId"/>: missing value from bf:descriptionAuthentication property</xsl:message>
+                </transform>
+              </case>
+            </switch>
+          </select>
+        </sf>
+      </df>
+    </case>
+  </switch>
+
+  <df tag="043">
+    <context xpath="bf:Work/bf:geographicCoverage[
+                      contains(@rdf:resource,'id.loc.gov/vocabulary/geographicAreas') or
+                      contains(bf:GeographicCoverage/@rdf:about,'id.loc.gov/vocabulary/geographicAreas') or 
+                      bf:GeographicCoverage/madsrdf:code or
+                      bf:GeographicCoverage/bf:code or
+                      madsrdf:Geographic/madsrdf:code or 
+                      bf:GeographicCoverage/rdf:value]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <var name="vUri">
+        <switch>
+          <case test="@rdf:resource"><transform><xsl:value-of select="@rdf:resource"/></transform></case>
+          <case test="*/@rdf:about"><transform><xsl:value-of select="*/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <switch>
+        <case test="*/bf:code">
+          <sf code="a"><select xpath="*/bf:code" /></sf>
+          <switch>
+            <case test="*/@rdf:about">
+              <sf code="0"><transform><xsl:value-of select="*/@rdf:about"/></transform></sf>
+            </case>
+          </switch>
+        </case>
+        <case test="*/madsrdf:code">
+          <sf code="a"><select xpath="*/madsrdf:code" /></sf>
+          <switch>
+            <case test="*/@rdf:about">
+              <sf code="0"><transform><xsl:value-of select="*/@rdf:about"/></transform></sf>
+            </case>
+          </switch>
+        </case>
+        <case test="starts-with($vUri,'http://id.loc.gov/vocabulary/geographicAreas/')">
+          <sf code="a">
+            <transform>
+              <xsl:call-template name="tPadRight">
+                <xsl:with-param name="pInput" select="substring-after($vUri,'http://id.loc.gov/vocabulary/geographicAreas/')"/>
+                <xsl:with-param name="pPadChar" select="'-'"/>
+                <xsl:with-param name="pStringLength" select="7"/>
+              </xsl:call-template>
+            </transform>
+          </sf>
+          <sf code="0"><transform><xsl:value-of select="$vUri"/></transform></sf>
+        </case>
+        <case test="bf:GeographicCoverage/bf:source/bf:Source/bf:code='ISO 3166'">
+          <sf code="c"><select xpath="bf:GeographicCoverage/rdf:value"/></sf>
+          <switch>
+            <case test="$vUri != ''">
+              <sf code="0"><transform><xsl:value-of select="$vUri"/></transform></sf>
+            </case>
+          </switch>
+        </case>
+        <case test="default">
+          <sf code="b"><select xpath="bf:GeographicCoverage/rdf:value"/></sf>
+          <switch>
+            <case test="$vUri != ''">
+              <sf code="0"><transform><xsl:value-of select="$vUri"/></transform></sf>
+            </case>
+          </switch>
+          <sf code="2"><select xpath="bf:GeographicCoverage/bf:source/bf:Source/bf:code"/></sf>
+        </case>
+      </switch>
+      <sf code="0">
+        <select xpath="*/bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vIdType">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vIdType != ''"><xsl:value-of select="concat('(',$vIdType,')',rdf:value)"/></xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+    </context>
+  </df>
+
+  <switch>
+    <case test="bf:Work/bf:temporalCoverage">
+      <df tag="045">
+        <ind1 default=" ">
+          <switch>
+            <case test="count(bf:Work/bf:temporalCoverage[(@rdf:datatype='http://id.loc.gov/datatypes/edtf' or @rdf:datatype='http://www.w3.org/2001/XMLSchema#date' or @rdf:datatype='http://www.w3.org/2001/XMLSchema#dateTime') and not(contains(.,'X')) and not (contains(.,'/'))]) = 1">0</case>
+            <case test="count(bf:Work/bf:temporalCoverage[(@rdf:datatype='http://id.loc.gov/datatypes/edtf' or @rdf:datatype='http://www.w3.org/2001/XMLSchema#date' or @rdf:datatype='http://www.w3.org/2001/XMLSchema#dateTime') and not(contains(.,'X')) and not (contains(.,'/'))]) &gt; 1">1</case>
+            <case test="count(bf:Work/bf:temporalCoverage[(@rdf:datatype='http://id.loc.gov/datatypes/edtf' or @rdf:datatype='http://www.w3.org/2001/XMLSchema#date' or @rdf:datatype='http://www.w3.org/2001/XMLSchema#dateTime') and not(contains(.,'X')) and contains(.,'/')]) = 1">2</case>
+          </switch>
+        </ind1>
+        <ind2 default=" "/>
+        <sf code="a">
+          <select xpath="bf:Work/bf:temporalCoverage[@rdf:datatype='http://id.loc.gov/datatypes/edtf' and contains(.,'X')]">
+            <switch>
+              <case test="contains(.,'/')">
+                <transform>
+                  <xsl:variable name="v045Date1">
+                    <xsl:variable name="vDate1">
+                      <xsl:call-template name="EDTF-Date1">
+                        <xsl:with-param name="pEDTFDate" select="."/>
+                      </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:choose>
+                      <xsl:when test="starts-with($vDate1,'-')">
+                        <xsl:value-of select="exsl:node-set($df045BCEtimePeriods)/*[edtfDate=$vDate1]/code"/>
+                      </xsl:when>
+                      <xsl:otherwise>
+                        <xsl:variable name="vCentury" select="exsl:node-set($df045CEtimePeriods)/*[century=substring($vDate1,1,2)]/code"/>
+                        <xsl:variable name="vDecade">
+                          <xsl:choose>
+                            <xsl:when test="substring($vDate1,3,1)='X'">-</xsl:when>
+                            <xsl:otherwise><xsl:value-of select="substring($vDate1,3,1)"/></xsl:otherwise>
+                          </xsl:choose>
+                        </xsl:variable>
+                        <xsl:value-of select="concat($vCentury,$vDecade)"/>
+                      </xsl:otherwise>
+                    </xsl:choose>
+                  </xsl:variable>
+                  <xsl:variable name="v045Date2">
+                    <xsl:variable name="vDate2">
+                      <xsl:call-template name="EDTF-Date2">
+                        <xsl:with-param name="pEDTFDate" select="."/>
+                      </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:choose>
+                      <xsl:when test="starts-with($vDate2,'-')">
+                        <xsl:value-of select="exsl:node-set($df045BCEtimePeriods)/*[edtfDate=$vDate2]/code"/>
+                      </xsl:when>
+                      <xsl:otherwise>
+                        <xsl:variable name="vCentury" select="exsl:node-set($df045CEtimePeriods)/*[century=substring($vDate2,1,2)]/code"/>
+                        <xsl:variable name="vDecade">
+                          <xsl:choose>
+                            <xsl:when test="substring($vDate2,3,1)='X'">-</xsl:when>
+                            <xsl:otherwise><xsl:value-of select="substring($vDate2,3,1)"/></xsl:otherwise>
+                          </xsl:choose>
+                        </xsl:variable>
+                        <xsl:value-of select="concat($vCentury,$vDecade)"/>
+                      </xsl:otherwise>
+                    </xsl:choose>
+                  </xsl:variable>
+                  <xsl:value-of select="concat($v045Date1,$v045Date2)"/>
+                </transform>
+              </case>
+              <case test="default">
+                <switch>
+                  <case test="starts-with(.,'-')">
+                    <transform>
+                      <xsl:variable name="vEdtfDate" select="."/>
+                      <xsl:value-of select="concat(exsl:node-set($df045BCEtimePeriods)/*[edtfDate=$vEdtfDate]/code,exsl:node-set($df045BCEtimePeriods)/*[edtfDate=$vEdtfDate]/code)"/>
+                    </transform>
+                  </case>
+                  <case test="default">
+                    <transform>
+                      <xsl:variable name="vEdtfDate" select="."/>
+                      <xsl:variable name="vCentury" select="exsl:node-set($df045CEtimePeriods)/*[century=substring($vEdtfDate,1,2)]/code"/>
+                      <xsl:choose>
+                        <xsl:when test="substring($vEdtfDate,3,1)='X'">
+                          <xsl:value-of select="concat($vCentury,'-',$vCentury,'-')"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                          <xsl:value-of select="concat($vCentury,substring($vEdtfDate,3,1),$vCentury,substring($vEdtfDate,3,1))"/>
+                        </xsl:otherwise>
+                      </xsl:choose>
+                    </transform>
+                  </case>
+                </switch>
+              </case>
+            </switch>
+          </select>
+        </sf>
+        <select xpath="bf:Work/bf:temporalCoverage[not(contains(.,'X'))]">
+          <switch>
+            <case test="@rdf:datatype='http://id.loc.gov/datatypes/edtf' and contains(.,'/')">
+              <transform>
+                <xsl:variable name="vDate1">
+                    <xsl:call-template name="EDTF-Date1">
+                      <xsl:with-param name="pEDTFDate" select="."/>
+                    </xsl:call-template>
+                </xsl:variable>
+                <xsl:variable name="vDate2">
+                  <xsl:call-template name="EDTF-Date2">
+                    <xsl:with-param name="pEDTFDate" select="."/>
+                  </xsl:call-template>
+                </xsl:variable>
+                <marc:subfield code="b">
+                  <xsl:choose>
+                    <xsl:when test="substring($vDate1,1,1) = '-'">
+                      <xsl:value-of select="concat('c',translate($vDate1,' -:T',''))"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:value-of select="concat('d',translate($vDate1,' -:T',''))"/>
+                    </xsl:otherwise>
+                  </xsl:choose>
+                </marc:subfield>
+                <marc:subfield code="b">
+                  <xsl:choose>
+                    <xsl:when test="substring($vDate2,1,1) = '-'">
+                      <xsl:value-of select="concat('c',translate($vDate2,' -:T',''))"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:value-of select="concat('d',translate($vDate2,' -:T',''))"/>
+                    </xsl:otherwise>
+                  </xsl:choose>
+                </marc:subfield>
+              </transform>
+            </case>
+            <case test="(@rdf:datatype='http://id.loc.gov/datatypes/edtf' or @rdf:datatype='http://www.w3.org/2001/XMLSchema#date' or @rdf:datatype='http://www.w3.org/2001/XMLSchema#dateTime') and not (contains(.,'/'))">
+              <transform>
+                <marc:subfield code="b">
+                  <xsl:choose>
+                    <xsl:when test="substring(.,1,1) = '-'">
+                      <xsl:value-of select="concat('c',translate(.,' -:T',''))"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:value-of select="concat('d',translate(.,' -:T',''))"/>
+                    </xsl:otherwise>
+                  </xsl:choose>
+                </marc:subfield>
+              </transform>
+            </case>
+            <case test="default">
+              <transform>
+                <xsl:message>Record <xsl:value-of select="$vRecordId"/>: no datatype for bf:temporalCoverage predicate, putting unformatted string into 045 $b</xsl:message>
+                <marc:subfield code="b">
+                  <xsl:call-template name="tChopPunct">
+                    <xsl:with-param name="pString" select="."/>
+                  </xsl:call-template>
+                </marc:subfield>
+              </transform>
+            </case>
+          </switch>
+        </select>
+      </df>
+    </case>
+  </switch>
+
+    <select xpath="bf:Work/bf:originDate[@rdf:datatype='http://id.loc.gov/datatypes/edtf']">
+      <var name="vCF008PreNS">
+        <transform>
+          <xsl:apply-templates select="ancestor::rdf:RDF" mode="generate-008">
+            <xsl:with-param name="vAdminMetadata" select="$vAdminMetadata"/>
+          </xsl:apply-templates>
+        </transform>
+      </var>
+      <var name="vCF008" xpath="exsl:node-set($vCF008PreNS)" />
+      <var name="vDateType">
+        <transform>
+          <xsl:value-of select="substring($vCF008, 7, 1)" />
+        </transform>
+      </var>
+      <var name="v046DateTime1">
+        <transform>
+          <xsl:call-template name="EDTF-Date1">
+            <xsl:with-param name="pEDTFDate" select="."/>
+          </xsl:call-template>
+        </transform>
+      </var>
+      <var name="v046DateTime2">
+        <transform>
+          <xsl:call-template name="EDTF-Date2">
+            <xsl:with-param name="pEDTFDate" select="."/>
+          </xsl:call-template>
+        </transform>
+      </var>
+      <var name="v046Date1">
+        <transform>
+          <xsl:call-template name="EDTF-DatePart">
+            <xsl:with-param name="pEDTFDate" select="$v046DateTime1"/>
+          </xsl:call-template>
+        </transform>
+      </var>
+      <var name="v046Time1">
+        <transform>
+          <xsl:call-template name="EDTF-TimePart">
+            <xsl:with-param name="pEDTFDate" select="$v046DateTime1"/>
+          </xsl:call-template>
+        </transform>
+      </var>
+      <switch>
+        <case test="$vDateType != 'r'">
+          <df tag="046">
+            <ind1 default=" "/>
+            <ind2 default=" "/>
+            <sf code="k">
+              <transform>
+                <xsl:value-of select="concat(translate($v046Date1,'-',''),translate($v046Time1,':',''))"/>
+              </transform>
+            </sf>
+            <switch>
+              <case test="$v046DateTime2">
+                <sf code="l">
+                  <transform>
+                    <xsl:variable name="v046Date2">
+                      <xsl:call-template name="EDTF-DatePart">
+                        <xsl:with-param name="pEDTFDate" select="$v046DateTime2"/>
+                      </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:variable name="v046Time2">
+                      <xsl:call-template name="EDTF-TimePart">
+                        <xsl:with-param name="pEDTFDate" select="$v046DateTime2"/>
+                      </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:value-of select="concat(translate($v046Date2,'-',''),translate($v046Time2,':',''))"/>
+                  </transform>
+                </sf>
+              </case>
+            </switch>
+            <sf code="2"><transform><xsl:value-of select="'edtf'" /></transform></sf>
+          </df>
+        </case>
+      </switch>
+    </select>
+
+  <switch>
+    <case test="bf:Work/bf:instrument/bf:MusicInstrument or
+      bf:Work/bf:ensemble/bf:MusicEnsemble or
+      bf:Work/bf:voice/bf:MusicVoice">
+      <df tag="048">
+        <ind1 default=" "/>
+        <ind2 default=" "/>
+        <select xpath="bf:Work/bf:instrument/bf:MusicInstrument|bf:Work/bf:ensemble/bf:MusicEnsemble|bf:Work/bf:voice/bf:MusicVoice">
+          <sf code="a">
+            <transform>
+              <xsl:variable name="vType">
+                <xsl:choose>
+                  <xsl:when test="local-name() = 'MusicInstrument'"><xsl:value-of select="bf:instrumentalType"/></xsl:when>
+                  <xsl:when test="local-name() = 'MusicEnsemble'"><xsl:value-of select="bf:ensembleType"/></xsl:when>
+                  <xsl:when test="local-name() = 'MusicVoice'"><xsl:value-of select="bf:voiceType"/></xsl:when>
+                </xsl:choose>
+              </xsl:variable>
+              <xsl:variable name="vLabel"><xsl:value-of select="rdfs:label"/></xsl:variable>
+              <xsl:variable name="vCode">
+                <xsl:choose>
+                  <xsl:when test="rdfs:label and $vType != ''">
+                    <xsl:choose>
+                      <xsl:when test="exsl:node-set($df048performers)/performer[type=$vType and label=$vLabel]">
+                        <xsl:value-of select="exsl:node-set($df048performers)/performer[type=$vType and label=$vLabel]/code"/>
+                      </xsl:when>
+                      <xsl:when test="exsl:node-set($df048performers)/performer[type=$vType and not(label)]">
+                        <xsl:value-of select="exsl:node-set($df048performers)/performer[type=$vType and not(label)]/code"/>
+                      </xsl:when>
+                    </xsl:choose>
+                  </xsl:when>
+                  <xsl:when test="$vType != ''">
+                    <xsl:value-of select="exsl:node-set($df048performers)/performer[type=$vType and not(label)]/code"/>
+                  </xsl:when>
+                </xsl:choose>
+              </xsl:variable>
+              <xsl:variable name="vCount">
+                <xsl:if test="bf:count"><xsl:value-of select="format-number(bf:count,'00')"/></xsl:if>
+              </xsl:variable>
+              <xsl:choose>
+                <xsl:when test="$vCode != ''">
+                  <xsl:value-of select="concat($vCode,$vCount)"/>
+                </xsl:when>
+                <xsl:otherwise>
+                  <xsl:message>Record <xsl:value-of select="$vRecordId"/>: no 048 performer match for <xsl:value-of select="name()"/>[<xsl:value-of select="position()"/>]</xsl:message>
+                </xsl:otherwise>
+              </xsl:choose>
+            </transform>
+          </sf>
+        </select>
+      </df>
+    </case>
+  </switch>
+
+</rules>

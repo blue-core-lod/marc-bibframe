@@ -1,0 +1,2501 @@
+<?xml version='1.0'?>
+<rules xmlns="http://www.loc.gov/bf2marc"
+       xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+       xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+       xmlns:bf="http://id.loc.gov/ontologies/bibframe/"
+       xmlns:bflc="http://id.loc.gov/ontologies/bflc/"
+       xmlns:madsrdf="http://www.loc.gov/mads/rdf/v1#"
+       xmlns:marc="http://www.loc.gov/MARC21/slim"
+       xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <!-- added entries -->
+  
+
+  <!-- 
+    This handles the pattern for what will become a Name added entry.
+    It is predicated on a URI being referenced for the Name/Agent.
+    It is predicated on there being no bflc:marcKey.
+  -->
+  <df tag="$vAddedEntryNameLookupTag" lang-xpath="rdfs:label" lang-prefer="transliterated">
+    <context xpath="
+      bf:Work/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent[contains(@rdf:resource, 'id.loc.gov/authorities/') or contains(@rdf:resource, 'id.loc.gov/rwo/')] |
+      bf:Work/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/bf:*[(contains(@rdf:about, 'id.loc.gov/authorities/') or contains(@rdf:about, 'id.loc.gov/rwo/')) and not(bflc:marcKey)] |
+      bf:Work/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/madsrdf:*[(contains(@rdf:about, 'id.loc.gov/authorities/') or contains(@rdf:about, 'id.loc.gov/rwo/')) and not(bflc:marcKey)] |
+      bf:Instance/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent[contains(@rdf:resource, 'id.loc.gov/authorities/') or contains(@rdf:resource, 'id.loc.gov/rwo/')] |
+      bf:Instance/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/bf:*[(contains(@rdf:about, 'id.loc.gov/authorities/') or contains(@rdf:about, 'id.loc.gov/rwo/')) and not(bflc:marcKey)] |
+      bf:Instance/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/madsrdf:*[(contains(@rdf:about, 'id.loc.gov/authorities/') or contains(@rdf:about, 'id.loc.gov/rwo/')) and not(bflc:marcKey)] |
+      //bf:Item/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent[contains(@rdf:resource, 'id.loc.gov/authorities/') or contains(@rdf:resource, 'id.loc.gov/rwo/')] |
+      //bf:Item/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/bf:*[(contains(@rdf:about, 'id.loc.gov/authorities/') or contains(@rdf:about, 'id.loc.gov/rwo/')) and not(bflc:marcKey)] |
+      //bf:Item/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/madsrdf:*[(contains(@rdf:about, 'id.loc.gov/authorities/') or contains(@rdf:about, 'id.loc.gov/rwo/')) and not(bflc:marcKey)]
+      ">
+      
+      <var name="relURI">
+        <switch>
+          <case test="contains(@rdf:resource,'id.loc.gov')"><transform><xsl:value-of select="@rdf:resource"/></transform></case>
+          <case test="contains(@rdf:about,'id.loc.gov')"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <var name="vRelResourcePreNS">
+        <transform>
+          <xsl:call-template name="tGetRelResource">
+            <xsl:with-param name="pRelUri" select="$relURI"/>
+            <xsl:with-param name="pContext" select="."/>
+          </xsl:call-template>
+        </transform>
+      </var>
+      <var name="vRelResource" xpath="exsl:node-set($vRelResourcePreNS)" />
+      <var name="vAddedEntryNameLookupTag">
+        <switch>
+          <case test="$vRelResource//marc:datafield[@tag!='']">
+            <switch>
+              <case test="$vRelResource//marc:datafield[@tag='100']">700</case>
+              <case test="$vRelResource//marc:datafield[@tag='110']">710</case>
+              <case test="$vRelResource//marc:datafield[@tag='111']">711</case>
+              <case test="$vRelResource//marc:datafield[@tag='151']">710</case>
+            </switch>
+          </case>
+        </switch>
+      </var>
+      <var name="vValidSubfields">
+        <switch>
+          <case test="$vAddedEntryNameLookupTag='700'">abcdgjq</case>
+          <case test="$vAddedEntryNameLookupTag='710'">abcdgn</case>
+          <case test="$vAddedEntryNameLookupTag='711'">acdegnq</case>
+        </switch>
+      </var>
+      
+      <ind1 default=" ">
+        <case test="$vRelResource//marc:datafield[@tag='110']/@ind1 != ''">
+          <select xpath="$vRelResource//marc:datafield[@tag='110']/@ind1" />
+        </case>
+        <case test="local-name()='Place' or
+                    rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Place'] or 
+                    local-name()='Jurisdiction' or
+                    rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Jurisdiction']">1</case>
+        <case test="local-name()='Organization' or
+                    rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Organization']">2</case>
+        <case test="$vRelResource//marc:datafield[starts-with(@tag, '1')]">
+          <transform>
+            <xsl:value-of select="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1"></xsl:value-of>
+          </transform>
+        </case>
+      </ind1>
+      <ind2 default=" "/>
+      
+      <switch>
+        <case test="$vRelResource//marc:datafield[starts-with(@tag, '1')]">
+          <transform>
+            <xsl:for-each select="$vRelResource//marc:datafield[starts-with(@tag, '1')]/marc:subfield[contains($vValidSubfields,@code)]">
+              <marc:subfield>
+                <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                <xsl:value-of select="."/>
+              </marc:subfield>
+            </xsl:for-each>
+          </transform>
+        </case>
+      </switch>
+
+      <sf code="e">
+        <select xpath="
+            ancestor::node()/bf:role/bf:Role/rdfs:label[.!='Contributor']|
+            ancestor::node()/bf:role/bf:Role/madsrdf:authoritativeLabel[.!='Contributor']" />
+      </sf>
+      <select xpath="
+          ancestor::node()/bf:role/bf:Role[not(rdfs:label) and not(madsrdf:authoritativeLabel)]/@rdf:about[not(contains(., 'relators/ctb'))] | 
+          ancestor::node()/bf:role/@rdf:resource[not(contains(., 'relators/ctb'))]">
+        <var name="vRelationURI">
+          <switch>
+            <case test="contains(.,'id.loc.gov/')"><transform><xsl:value-of select="."/></transform></case>
+          </switch>
+        </var>
+        <var name="vRelationLabel">
+          <switch>
+            <case test="$vRelationURI != ''">
+              <transform>
+                <xsl:call-template name="tGetLabel">
+                  <xsl:with-param name="pUri" select="$vRelationURI"/>
+                </xsl:call-template>
+              </transform>
+            </case>
+          </switch>
+        </var>
+        <sf code="e" xpath="translate($vRelationLabel, $upper, $lower)" />
+      </select>
+      
+      <switch>
+        <case test="ancestor::node()/bf:role/bf:Role/@rdf:about[not(contains(., 'relators/ctb'))] or ancestor::node()/bf:role/@rdf:resource[not(contains(., 'relators/ctb'))]">
+          <sf code="4">
+            <select xpath="ancestor::node()/bf:role/bf:Role/@rdf:about | ancestor::node()/bf:role/@rdf:resource" />
+          </sf>
+        </case>
+        <case test="ancestor::node()/bf:role/bf:Role[bf:code[.!='ctb'] or madsrdf:code[.!='ctb']]">
+          <sf code="4">
+            <select xpath="ancestor::node()/bf:role/bf:Role/*[local-name() = 'code']" />
+          </sf>
+        </case>
+      </switch>
+      
+      
+        <switch>
+          <case test="$relURI != '' and contains($relURI, 'id.loc.gov/authorities/')">
+            <sf code="0">
+              <transform><xsl:value-of select="$relURI"/></transform>
+            </sf>
+          </case>
+          <case test="$relURI != '' and contains($relURI, 'id.loc.gov/rwo/agents/')">
+            <sf code="0">
+              <transform><xsl:value-of select="concat(substring-before($relURI,'rwo/agents'), 'authorities/names/', substring-after($relURI,'rwo/agents/'))"/></transform>
+            </sf>
+          </case>
+          <case test="not(contains($relURI,'example.org')) and not(contains($relURI,'REPLACE')) and not(contains($relURI,'rwo'))">
+            <sf code="0">
+              <transform><xsl:value-of select="$relURI" /></transform>
+            </sf>
+          </case>
+        </switch>
+        <switch>
+          <case test="$relURI != '' and (contains($relURI, '/agents/') or contains($relURI, '/gnd/'))">
+            <sf code="1">
+              <transform><xsl:value-of select="$relURI"/></transform>
+            </sf>
+          </case>
+          <case test="not(contains($relURI,'example.org')) and not(contains($relURI,'REPLACE')) and not(contains($relURI,'authorities'))">
+            <sf code="1">
+              <transform><xsl:value-of select="$relURI" /></transform>
+            </sf>
+          </case>
+        </switch>
+      
+    </context>
+  </df>
+
+  <!-- This is for when there is a marcKey present. -->
+  <select xpath="bf:Work/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/*[bflc:marcKey or marc:record] |
+    bf:Instance/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/*[bflc:marcKey or marc:record] |
+    //bf:Item/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/*[bflc:marcKey or marc:record]">
+    <var name="relURI">
+      <switch>
+        <case test="contains(@rdf:about,'id.loc.gov')"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+        <case test="contains(@rdf:about,'isni.org/isni/')"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+        <case test="contains(@rdf:about,'viaf.org/viaf/')"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+        <case test="contains(@rdf:about,'id.oclc.org/worldcat/entity/')"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+        <case test="contains(@rdf:about,'d-nb.info/gnd/')"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+      </switch>
+    </var>
+      <var name="vRelResourcePreNS">
+        <transform>
+          <xsl:call-template name="tGetMiniMARCFromKey">
+            <xsl:with-param name="pFieldStr" select="self::node()/bflc:marcKey[not(@xml:lang) or contains(translate(@xml:lang,$upper,$lower),translate($pCatScript,$upper,$lower))][1]"/>
+          </xsl:call-template>
+        </transform>
+      </var>
+      <var name="vRelResource" xpath="exsl:node-set($vRelResourcePreNS)" />
+      <var name="vAddedEntryNameMarcKeyTag">
+        <switch>
+          <case test="$vRelResource//marc:datafield[@tag!='']">
+            <switch>
+              <case test="$vRelResource//marc:datafield[@tag='100']">700</case>
+              <case test="$vRelResource//marc:datafield[@tag='110']">710</case>
+              <case test="$vRelResource//marc:datafield[@tag='111']">711</case>
+              <case test="$vRelResource//marc:datafield[@tag='151']">710</case>
+            </switch>
+          </case>
+          <case test="default">
+            <switch>
+              <case test="local-name()='Person' or contains(rdf:type/@rdf:resource, '/Person')">700</case>
+              <case test="local-name()='Organization' or contains(rdf:type/@rdf:resource, '/Organization')">710</case>
+              <case test="local-name()='Meeting' or contains(rdf:type/@rdf:resource, '/Meeting')">711</case>
+              <case test="local-name()='Place' or contains(rdf:type/@rdf:resource, '/Place')">710</case>
+            </switch>
+          </case>
+        </switch>
+      </var>
+      <var name="vValidSubfields">
+        <switch>
+          <case test="$vAddedEntryNameMarcKeyTag='700'">abcdgjq</case>
+          <case test="$vAddedEntryNameMarcKeyTag='710'">abcdgn</case>
+          <case test="$vAddedEntryNameMarcKeyTag='711'">acdegnq</case>
+        </switch>
+      </var>
+    
+    <var name="vLangTagLabel">
+      <transform>
+        <xsl:call-template name="tGetBCP47RegField">
+          <xsl:with-param name="x" select="self::node()/bflc:marcKey" />
+        </xsl:call-template>
+      </transform>
+    </var>
+    <var name="vLangTagScript">
+      <transform>
+        <xsl:call-template name="tGetBCP47for880">
+          <xsl:with-param name="x" select="self::node()/bflc:marcKey" />
+          <xsl:with-param name="bcp47forRegField" select="$vLangTagLabel" />
+        </xsl:call-template>
+      </transform>
+    </var>
+    
+    <var name="v880Script">
+      <switch>
+        <case test="$vLangTagScript!=''">
+          <lookup map="df880script" targetField="code">
+            <lookupField name="lang" xpath="substring-after($vLangTagScript,'-')"/>
+          </lookup>
+        </case>
+      </switch>
+    </var>
+      
+    <var name="vNameVariantPreNS">
+      <transform>
+        <xsl:if test="$v880Script != '' and self::node()/bflc:marcKey[@xml:lang and not(contains(translate(@xml:lang,$upper,$lower),translate($pCatScript,$upper,$lower)))][1]">
+          <xsl:call-template name="tGetMiniMARCFromKey">
+            <xsl:with-param name="pFieldStr" select="self::node()/bflc:marcKey[@xml:lang and not(contains(translate(@xml:lang,$upper,$lower),translate($pCatScript,$upper,$lower)))][1]"/>
+          </xsl:call-template>
+        </xsl:if>
+      </transform>
+    </var>
+      <var name="vNameVariant" xpath="exsl:node-set($vNameVariantPreNS)" />
+    <var name="vNameVariantTag">
+      <switch>
+        <case test="$vNameVariant//marc:record">
+          <switch>
+            <case test="$vNameVariant//marc:datafield[@tag='100']">100</case>
+            <case test="$vNameVariant//marc:datafield[@tag='110']">110</case>
+            <case test="$vNameVariant//marc:datafield[@tag='111']">111</case>
+            <case test="$vNameVariant//marc:datafield[@tag='151']">110</case>
+          </switch>
+        </case>
+      </switch>
+    </var>
+    
+    <var name="vShared">
+      <switch>
+        <case test="ancestor::node()/bf:role/bf:Role[rdfs:label[.!='Contributor'] or madsrdf:authoritativeLabel[.!='Contributor']]">
+          <select xpath="ancestor::node()/bf:role/bf:Role/rdfs:label|ancestor::node()/bf:role/bf:Role/madsrdf:authoritativeLabel">
+            <sf code="e">
+              <transform><xsl:value-of select="translate(., $upper, $lower)" /></transform>
+            </sf>
+          </select>
+        </case>
+        <case test="ancestor::node()/bf:role/bf:Role[not(rdfs:label) and not(madsrdf:authoritativeLabel)]/@rdf:about[not(contains(., 'relators/ctb'))] or ancestor::node()/bf:role/@rdf:resource[not(contains(., 'relators/ctb'))]">
+          <select xpath="ancestor::node()/bf:role/bf:Role[not(rdfs:label) and not(madsrdf:authoritativeLabel)]/@rdf:about | ancestor::node()/bf:role/@rdf:resource">
+            <var name="vRelationURI">
+              <switch>
+                <case test="contains(.,'id.loc.gov/')"><transform><xsl:value-of select="."/></transform></case>
+              </switch>
+            </var>
+            <var name="vRelationLabel">
+              <switch>
+                <case test="$vRelationURI != ''">
+                  <transform>
+                    <xsl:call-template name="tGetLabel">
+                      <xsl:with-param name="pUri" select="$vRelationURI"/>
+                    </xsl:call-template>
+                  </transform>
+                </case>
+              </switch>
+            </var>
+            <sf code="e" xpath="translate($vRelationLabel, $upper, $lower)" />
+          </select>              
+        </case>
+      </switch>
+      
+      <switch>
+        <case test="ancestor::node()/bf:role/bf:Role/@rdf:about[not(contains(., 'relators/ctb'))] or ancestor::node()/bf:role/@rdf:resource[not(contains(., 'relators/ctb'))]">
+          <sf code="4">
+            <select xpath="ancestor::node()/bf:role/bf:Role/@rdf:about | ancestor::node()/bf:role/@rdf:resource" />
+          </sf>
+        </case>
+        <case test="ancestor::node()/bf:role/bf:Role[bf:code[.!='ctb'] or madsrdf:code[.!='ctb']]">
+          <sf code="4">
+            <select xpath="ancestor::node()/bf:role/bf:Role/*[local-name() = 'code']" />
+          </sf>
+        </case>
+      </switch>
+      
+      <switch>
+        <case test="ancestor::bf:contribution/parent::bf:Item">
+          <sf code="5">
+            <transform><xsl:value-of select="$pConversionAgency" /></transform>
+          </sf>
+        </case>
+      </switch>
+      
+      <switch>
+        <case test="$relURI != '' and contains($relURI, 'id.loc.gov/authorities/')">
+          <sf code="0">
+            <transform><xsl:value-of select="$relURI"/></transform>
+          </sf>
+        </case>
+        <case test="$relURI != '' and contains($relURI, 'id.loc.gov/rwo/agents/')">
+          <sf code="0">
+            <transform><xsl:value-of select="concat(substring-before($relURI,'rwo/agents'), 'authorities/names/', substring-after($relURI,'rwo/agents/'))"/></transform>
+          </sf>
+        </case>
+        <case test="not(contains($relURI,'example.org')) and 
+          not(contains($relURI,'REPLACE')) and 
+          not(contains($relURI,'rwo')) and 
+          not(contains($relURI,'id.oclc.org/worldcat/entity/')) and 
+          not(contains($relURI,'isni.org/isni/')) and 
+          not(contains($relURI,'viaf.org/viaf/')) and 
+          not(contains($relURI,'d-nb.info/gnd/'))">
+          <sf code="0">
+            <transform><xsl:value-of select="$relURI" /></transform>
+          </sf>
+        </case>
+      </switch>
+      <switch>
+        <case test="$relURI != '' and (contains($relURI, '/agents/') or contains($relURI, '/gnd/'))">
+          <sf code="1">
+            <transform><xsl:value-of select="$relURI"/></transform>
+          </sf>
+        </case>
+        <case test="$relURI != '' and contains($relURI, 'id.loc.gov/authorities/')">
+          <sf code="1">
+            <transform><xsl:value-of select="concat(substring-before($relURI,'authorities/names'), 'rwo/agents/', substring-after($relURI,'authorities/names/'))"/></transform>
+          </sf>
+        </case>
+        <case test="contains($relURI,'id.oclc.org/worldcat/entity/') or 
+          contains($relURI,'isni.org/isni/') or 
+          contains($relURI,'viaf.org/viaf/') or 
+          contains($relURI,'d-nb.info/gnd/')">
+          <sf code="1">
+            <transform><xsl:value-of select="$relURI" /></transform>
+          </sf>
+        </case>
+        <case test="not(contains($relURI,'example.org')) and 
+          not(contains($relURI,'REPLACE')) and 
+          not(contains($relURI,'authorities'))">
+          <sf code="1">
+            <transform><xsl:value-of select="$relURI" /></transform>
+          </sf>
+        </case>
+      </switch>
+    </var>
+    
+    <switch>
+      <case test="$vRelResource//marc:datafield[@tag!='']">
+        <df tag="$vAddedEntryNameMarcKeyTag">
+      <ind1 default=" ">
+        <switch>
+          <case test="$vRelResource//marc:datafield[@tag='110']/@ind1 != ''">
+            <select xpath="$vRelResource//marc:datafield[@tag='110']/@ind1" />
+          </case>
+          <case test="local-name()='Place' or
+            rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Place'] or 
+            local-name()='Jurisdiction' or
+            rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Jurisdiction']">1</case>
+          <case test="local-name()='Organization' or
+            rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Organization']">2</case>
+          <case test="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1 != ''">
+            <select xpath="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1" />
+          </case>
+          <case test="$vAddedEntryNameMarcKeyTag='710'">2</case>
+          <case test="default"><transform><xsl:value-of select="' '" /></transform></case>
+        </switch>
+      </ind1>
+      <ind2 default=" "/>
+      <switch>
+        <case test="$vNameVariant//marc:datafield[@tag!='']">
+          <!-- We have a variant, so we need to create an 880 link. -->
+          <sf code="6"><transform><xsl:value-of select="concat('880-', 69+position())"/></transform></sf>   
+        </case>
+      </switch>
+      <transform>
+        <xsl:for-each select="$vRelResource//marc:datafield[starts-with(@tag, '1')]/marc:subfield[contains($vValidSubfields,@code)]">
+          <marc:subfield>
+            <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+            <xsl:value-of select="."/>
+          </marc:subfield>
+        </xsl:for-each>
+        <xsl:copy-of select="$vShared" />
+        <xsl:if test="$vLangTagLabel!=''">
+          <marc:subfield code="7">
+              <xsl:variable name="bcp47code">
+                <xsl:call-template name="tOutputBCP47">
+                  <xsl:with-param name="bcp47orig" select="$vLangTagLabel" />
+                </xsl:call-template>
+              </xsl:variable>
+              <xsl:value-of select="concat('(bcp47)', $bcp47code)" />
+          </marc:subfield>
+        </xsl:if>
+      </transform>
+    </df>
+      </case>
+    </switch>
+    
+    <switch>
+      <case test="$vNameVariant//marc:datafield[@tag!='']">
+        <!-- We have a variant, so we need to create an 880. -->
+        <df tag="880">
+          <ind1 default=" ">
+            <switch>
+              <case test="local-name()='Place' or
+                rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Place'] or 
+                local-name()='Jurisdiction' or
+                rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Jurisdiction']">1</case>
+              <case test="local-name()='Organization' or
+                rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Organization']">2</case>
+              <case test="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1 != ''">
+                <select xpath="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1" />
+              </case>
+              <case test="$vNameVariant//marc:datafield[@tag=$vNameVariantTag]">
+                <transform><xsl:value-of select="$vNameVariant//marc:datafield[@tag=$vNameVariantTag]/@ind1"/></transform>
+              </case>
+            </switch>
+          </ind1>
+          <ind2 default=" "/>
+          <sf code="6">
+            <switch>
+              <case test="$vRelResource//marc:datafield[@tag!='']">
+                <transform><xsl:value-of select="concat($vAddedEntryNameMarcKeyTag, '-', 69+position(), '/', $v880Script)"/></transform>
+              </case>
+              <case test="default">
+                <transform><xsl:value-of select="concat($vAddedEntryNameMarcKeyTag, '-00', '/', $v880Script)"/></transform>
+              </case>
+            </switch>
+          </sf>
+          <transform>
+            <xsl:for-each select="$vNameVariant//marc:datafield/marc:subfield[contains($vValidSubfields,@code)]">
+              <marc:subfield>
+                <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                <xsl:value-of select="."/>
+              </marc:subfield>
+            </xsl:for-each>
+            <xsl:copy-of select="$vShared" />
+          </transform>
+          <sf code="7">
+            <transform>
+              <xsl:variable name="bcp47code">
+                <xsl:call-template name="tOutputBCP47">
+                  <xsl:with-param name="bcp47orig" select="$vLangTagScript" />
+                </xsl:call-template>
+              </xsl:variable>
+              <xsl:value-of select="concat('(bcp47)', $bcp47code)" />
+            </transform>
+          </sf>
+        </df>
+      </case>
+    </switch>
+      
+  </select>
+  
+  <!-- 
+    This handles the relationship/Relationship pattern for what will 
+    become a Name/Title or Title added entry.
+    It is predicated on a Hub being referenced and there is no bflc:marcKey.
+    It will only trigger if libxslt is not the processor.
+  -->
+  <if test="$xslProcessor != 'libxslt'">
+    <df tag="$vAddRelationLookupTag" lang-xpath="rdfs:label" lang-prefer="transliterated">
+      <context xpath="bf:Work/bf:relation/bf:Relation[bf:relationship[not(contains(@rdf:resource, 'hasSeries')) and not(contains(bf:Relationship/@rdf:about, 'hasSeries')) and not(contains(@rdf:resource, '/relationship/series')) and not(contains(bf:Relationship/@rdf:about, '/relationship/series'))]]/bf:associatedResource[contains(@rdf:resource, 'hubs')] |
+        bf:Work/bf:relation/bf:Relation[bf:relationship[not(contains(@rdf:resource, 'hasSeries')) and not(contains(bf:Relationship/@rdf:about, 'hasSeries'))and not(contains(@rdf:resource, '/relationship/series')) and not(contains(bf:Relationship/@rdf:about, '/relationship/series'))]]/bf:associatedResource/bf:*[contains(@rdf:about, 'hubs') and not(bflc:marcKey)] |
+        bf:Work/bflc:relationship/bflc:Relationship[bflc:relation[not(contains(@rdf:resource, 'hasSeries')) and not(contains(bflc:Relation/@rdf:about, 'hasSeries'))]]/bf:relatedTo[contains(@rdf:resource, 'hubs')] |
+        bf:Work/bflc:relationship/bflc:Relationship[bflc:relation[not(contains(@rdf:resource, 'hasSeries')) and not(contains(bflc:Relation/@rdf:about, 'hasSeries'))]]/bf:relatedTo/bf:*[contains(@rdf:about, 'hubs') and not(bflc:marcKey)] |
+        bf:Work/bf:relatedTo[contains(@rdf:resource, 'hubs')] |
+        bf:Work/bf:relatedTo/bf:*[contains(@rdf:about, 'hubs') and not(bflc:marcKey)] |
+        bf:Work/bf:hasPart[contains(@rdf:resource, 'hubs')] |
+        bf:Work/bf:hasPart/bf:*[contains(@rdf:about, 'hubs') and not(bflc:marcKey)]
+        ">
+        
+        <var name="relURI">
+          <switch>
+            <case test="contains(@rdf:resource,'id.loc.gov/resources/hubs')"><transform><xsl:value-of select="@rdf:resource"/></transform></case>
+            <case test="contains(@rdf:about,'id.loc.gov/resources/hubs')"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+          </switch>
+        </var>
+        <var name="vRelResourcePreNS">
+          <transform>
+            <xsl:call-template name="tGetRelResource">
+              <xsl:with-param name="pRelUri" select="$relURI"/>
+              <xsl:with-param name="pContext" select="."/>
+            </xsl:call-template>
+          </transform>
+        </var>
+        <var name="vRelResource" xpath="exsl:node-set($vRelResourcePreNS)" />
+        <var name="vAddRelationLookupTag">
+          <switch>
+            <case test="$vRelResource//marc:record">
+              <switch>
+                <case test="$vRelResource//marc:datafield[@tag='100']">700</case>
+                <case test="$vRelResource//marc:datafield[@tag='110']">710</case>
+                <case test="$vRelResource//marc:datafield[@tag='111']">711</case>
+                <case test="$vRelResource//marc:datafield[@tag='130']">730</case>
+                <case test="default">758</case>
+              </switch>
+            </case>
+            <case test="default">758</case>
+          </switch>
+        </var>
+        <var name="vValidSubfields">
+          <switch>
+            <case test="$vAddRelationLookupTag='700'">abcdfghjklmnopqrst</case>
+            <case test="$vAddRelationLookupTag='710'">abcdfghklmnoprst</case>
+            <case test="$vAddRelationLookupTag='711'">acdeghklnpqst</case>
+            <case test="$vAddRelationLookupTag='730'">adfghklmnoprst</case>
+          </switch>
+        </var>
+        
+        <ind1 default=" ">
+          <switch>
+            <case test="$vAddRelationLookupTag = '730'">
+              <switch>
+                <case test="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1 != '' and $vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1 != ' '">
+                  <select xpath="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1" />
+                </case>
+                <case test="default">0</case>
+              </switch>
+            </case>
+            <case test="default">
+              <select xpath="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1" />
+            </case>
+          </switch>
+        </ind1>
+        <ind2 default=" ">
+          <switch>
+            <case test="ancestor::bf:Relation/bf:relationship//@rdf:*[.='http://id.loc.gov/vocabulary/relationship/part']">2</case>
+            <case test="ancestor::bf:Relation/bf:relationship//@rdf:*[.='http://id.loc.gov/ontologies/bibframe/hasPart']">2</case>
+            <case test="ancestor::bflc:Relationship/bflc:relation//@rdf:*[.='http://id.loc.gov/ontologies/bibframe/hasPart']">2</case>
+            <case test="self::bf:hasPart or ancestor::bf:hasPart">2</case>
+          </switch>
+        </ind2>
+        
+        <select xpath="../bf:relationship/bf:Relationship[not(rdfs:label) and not(madsrdf:authoritativeLabel)]/@rdf:about | ../bf:relationship/@rdf:resource |
+                       ../bflc:relation/bflc:Relation[not(rdfs:label) and not(madsrdf:authoritativeLabel)]/@rdf:about | ../bflc:relation/@rdf:resource">
+          <var name="vRelationURI">
+            <switch>
+              <case test="contains(.,'id.loc.gov/entities')"><transform><xsl:value-of select="."/></transform></case>
+            </switch>
+          </var>
+          <var name="vRelationLabel">
+            <switch>
+              <case test="parent::node()/marc:record">
+                <transform><xsl:copy-of select="parent::node()/marc:record"/></transform>
+              </case>
+              <case test="$vRelationURI != ''">
+                <transform>
+                  <xsl:call-template name="tGetLabel">
+                    <xsl:with-param name="pUri" select="$vRelationURI"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+            </switch>
+          </var>
+          <sf code="i">
+            <transform><xsl:value-of select="$vRelationLabel"/></transform>
+          </sf>
+        </select>
+        <sf code="i">
+          <select xpath="../../bf:relationship/bf:Relationship/rdfs:label|../../bf:relationship/bf:Relationship/madsrdf:authoritativeLabel |
+                         ../../bflc:relation/bflc:Relation/rdfs:label|../../bflc:relation/bflc:Relation/madsrdf:authoritativeLabel" />
+        </sf>
+        <switch>
+          <case test="$vRelResource//marc:datafield[starts-with(@tag, '1')]">
+            <transform>
+              <xsl:for-each select="$vRelResource//marc:datafield[starts-with(@tag, '1')]/marc:subfield[contains($vValidSubfields,@code)]">
+                <marc:subfield>
+                  <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                  <xsl:value-of select="."/>
+                </marc:subfield>
+              </xsl:for-each>
+            </transform>
+          </case>
+        </switch>
+        <switch>
+          <case test="$vRelResource//marc:datafield[@tag = '240'] and $vAddRelationLookupTag != '730'">
+            <transform>
+              <xsl:for-each select="$vRelResource//marc:datafield[@tag = '240']/marc:subfield[contains('adfghklmnoprs',@code)]">
+                <marc:subfield>
+                  <xsl:choose>
+                    <xsl:when test="@code = 'a'">
+                      <xsl:attribute name="code">t</xsl:attribute>
+                    </xsl:when>
+                    <xsl:otherwise>
+                      <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                    </xsl:otherwise>
+                  </xsl:choose>
+                  <xsl:value-of select="."/>
+                </marc:subfield>
+              </xsl:for-each>
+            </transform>
+          </case>
+        </switch>
+        
+        <switch>
+          <case test="../../bf:relationship/bf:Relationship/@rdf:about or ../bf:relationship/@rdf:resource">
+            <sf code="4">
+              <select xpath="../../bf:relationship/bf:Relationship/@rdf:about | ../bf:relationship/@rdf:resource" />
+            </sf>
+          </case>
+          <case test="../../bflc:relation/bflc:Relation/@rdf:about or ../bflc:relation/@rdf:resource">
+            <sf code="4">
+              <select xpath="../../bflc:relation/bflc:Relation/@rdf:about | ../bflc:relation/@rdf:resource" />
+            </sf>
+          </case>
+        </switch>
+        
+        <sf code="1">
+          <switch>
+            <case test="$relURI != ''">
+              <transform><xsl:value-of select="$relURI"/></transform>
+            </case>
+          </switch>
+        </sf>
+        
+      </context>
+    </df>
+  </if>
+  
+  <if test="$xslProcessor = 'libxslt'">
+      <switch>
+        <case test="bf:Work/bf:relation/bf:Relation[bf:relationship[not(contains(@rdf:resource, 'hasSeries')) and not(contains(@rdf:resource, '/relationship/series'))]]/bf:associatedResource[contains(@rdf:resource, 'hubs')] |
+                    bf:Work/bf:relation/bf:Relation[bf:relationship[not(contains(@rdf:resource, 'hasSeries')) and not(contains(@rdf:resource, '/relationship/series'))]]/bf:associatedResource/bf:*[contains(@rdf:about, 'hubs') and not(bflc:marcKey)] |
+                    bf:Work/bflc:relationship/bflc:Relationship[bflc:relation[not(contains(@rdf:resource, 'hasSeries'))]]/bf:relatedTo[contains(@rdf:resource, 'hubs')] |
+                    bf:Work/bflc:relationship/bflc:Relationship[bflc:relation[not(contains(@rdf:resource, 'hasSeries'))]]/bf:relatedTo/bf:*[contains(@rdf:about, 'hubs') and not(bflc:marcKey)] |
+                    bf:Work/bf:relatedTo[contains(@rdf:resource, 'hubs')] |
+                    bf:Work/bf:relatedTo/bf:*[contains(@rdf:about, 'hubs') and not(bflc:marcKey)] |
+                    bf:Work/bf:hasPart[contains(@rdf:resource, 'hubs')] |
+                    bf:Work/bf:hasPart/bf:*[contains(@rdf:about, 'hubs') and not(bflc:marcKey)]
+            ">
+        <transform>
+          <xsl:message>Record <xsl:value-of select="$vRecordId"/>: Unprocessed relationship node(s)/Hub(s) <xsl:value-of select="name()"/>.  Repeatable target field 7XX.</xsl:message>
+        </transform>
+        </case>
+      </switch>
+  </if>
+  
+  <!-- This handles the relationship/Relationship pattern when there is a marcKey present. -->
+  <select xpath="bf:Work/bf:relation/bf:Relation[bf:relationship[not(contains(@rdf:resource, 'hasSeries')) and not(contains(bf:Relationship/@rdf:about, 'hasSeries')) and not(contains(@rdf:resource, '/relationship/series')) and not(contains(bf:Relationship/@rdf:about, '/relationship/series'))]]/bf:associatedResource/bf:*[bflc:marcKey or marc:record] |
+    bf:Work/bflc:relationship/bflc:Relationship[bflc:relation[not(contains(@rdf:resource, 'hasSeries')) and not(contains(bflc:Relation/@rdf:about, 'hasSeries'))and not(contains(@rdf:resource, '/relationship/series')) and not(contains(bf:Relationship/@rdf:about, '/relationship/series'))]]/bf:relatedTo/bf:*[bflc:marcKey or marc:record] |
+    bf:Work/bf:relatedTo/bf:*[bflc:marcKey or marc:record] |
+    bf:Work/bf:hasPart/bf:*[bflc:marcKey or marc:record]
+    ">
+    <var name="relURI">
+      <switch>
+        <case test="contains(@rdf:about,'id.loc.gov/resources/hubs')"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+      </switch>
+    </var>
+
+    <var name="vRelResourcePreNS">
+      <transform>
+        <xsl:call-template name="tGetRelResource">
+          <xsl:with-param name="pRelUri" select="$relURI"/>
+          <xsl:with-param name="pContext" select="."/>
+        </xsl:call-template>
+      </transform>
+    </var>
+    <var name="vRelResource" xpath="exsl:node-set($vRelResourcePreNS)" />
+    <var name="vAddRelationMarcKeyTag">
+      <switch>
+        <case test="$vRelResource//marc:record">
+          <switch>
+            <case test="$vRelResource//marc:datafield[@tag='100']">700</case>
+            <case test="$vRelResource//marc:datafield[@tag='110']">710</case>
+            <case test="$vRelResource//marc:datafield[@tag='111']">711</case>
+            <case test="$vRelResource//marc:datafield[@tag='130']">730</case>
+          </switch>
+        </case>
+      </switch>
+    </var>
+    <var name="vValidSubfields">
+      <switch>
+        <case test="$vAddRelationMarcKeyTag='700'">abcdfghjklmnopqrst</case>
+        <case test="$vAddRelationMarcKeyTag='710'">abcdfghklmnoprst</case>
+        <case test="$vAddRelationMarcKeyTag='711'">acdeghklnpqst</case>
+        <case test="$vAddRelationMarcKeyTag='730'">adfghklmnoprst</case>
+      </switch>
+    </var>
+    
+    <var name="vLangTagLabel">
+      <transform>
+        <xsl:call-template name="tGetBCP47RegField">
+          <xsl:with-param name="x" select="self::node()/bflc:marcKey" />
+        </xsl:call-template>
+      </transform>
+    </var>
+    <var name="vLangTagScript">
+      <transform>
+        <xsl:call-template name="tGetBCP47for880">
+          <xsl:with-param name="x" select="self::node()/bflc:marcKey" />
+          <xsl:with-param name="bcp47forRegField" select="$vLangTagLabel" />
+        </xsl:call-template>
+      </transform>
+    </var>
+    
+    <var name="v880Script">
+      <switch>
+        <case test="$vLangTagScript!=''">
+          <lookup map="df880script" targetField="code">
+            <lookupField name="lang" xpath="substring-after($vLangTagScript,'-')"/>
+          </lookup>
+        </case>
+      </switch>
+    </var>
+    
+    <var name="vRelVariantPreNS">
+      <transform>
+        <xsl:if test="$v880Script != '' and self::node()/bflc:marcKey[@xml:lang and not(contains(translate(@xml:lang,$upper,$lower),translate($pCatScript,$upper,$lower)))][1]">
+          <xsl:call-template name="tGetMiniMARCFromKey">
+            <xsl:with-param name="pFieldStr" select="self::node()/bflc:marcKey[@xml:lang and not(contains(translate(@xml:lang,$upper,$lower),translate($pCatScript,$upper,$lower)))][1]"/>
+          </xsl:call-template>
+        </xsl:if>
+      </transform>
+    </var>
+    <var name="vRelVariant" xpath="exsl:node-set($vRelVariantPreNS)" />
+    <var name="vRelVariantTag">
+      <switch>
+        <case test="$vRelVariant//marc:record">
+          <switch>
+            <case test="$vRelVariant//marc:datafield[@tag='100']">100</case>
+            <case test="$vRelVariant//marc:datafield[@tag='110']">110</case>
+            <case test="$vRelVariant//marc:datafield[@tag='111']">111</case>
+            <case test="$vRelVariant//marc:datafield[@tag='151']">110</case>
+          </switch>
+        </case>
+      </switch>
+    </var>
+    
+    <var name="vRelStrs">
+      <transform>
+        <xsl:value-of select="'
+          http://id.loc.gov/vocabulary/relationship/subseries 
+          http://id.loc.gov/vocabulary/relationship/series 
+          http://id.loc.gov/vocabulary/relationship/translationof 
+          http://id.loc.gov/vocabulary/relationship/translatedas 
+          http://id.loc.gov/vocabulary/relationship/supplementto 
+          http://id.loc.gov/vocabulary/relationship/supplement 
+          http://id.loc.gov/vocabulary/relationship/partof 
+          http://id.loc.gov/vocabulary/relationship/part 
+          http://id.loc.gov/vocabulary/relationship/otheredition 
+          http://id.loc.gov/vocabulary/relationship/otherphysicalformat 
+          http://id.loc.gov/vocabulary/relationship/issuedwith 
+          http://id.loc.gov/vocabulary/relationship/continuedinpart 
+          http://id.loc.gov/vocabulary/relationship/continuationof 
+          http://id.loc.gov/vocabulary/relationship/continues 
+          http://id.loc.gov/vocabulary/relationship/precededby 
+          http://id.loc.gov/vocabulary/relationship/mergerof 
+          http://id.loc.gov/vocabulary/relationship/absorbedby 
+          http://id.loc.gov/vocabulary/relationship/absorptionof 
+          http://id.loc.gov/vocabulary/relationship/separatedby 
+          http://id.loc.gov/vocabulary/relationship/continuedby 
+          http://id.loc.gov/vocabulary/relationship/continuedinpartby 
+          http://id.loc.gov/vocabulary/relationship/succeededby 
+          http://id.loc.gov/vocabulary/relationship/splitinto 
+          http://id.loc.gov/vocabulary/relationship/mergedtoform 
+          http://id.loc.gov/vocabulary/relationship/datasource 
+          http://id.loc.gov/vocabulary/relationship/relatedwork
+          '" />
+      </transform> 
+    </var>
+    <var name="iSubfieldShared">
+      <select xpath="ancestor::bf:Relation/bf:relationship/bf:Relationship[not(rdfs:label) and not(madsrdf:authoritativeLabel)]/@rdf:about | ../bf:relationship/@rdf:resource |
+        ancestor::bflc:Relationship/bflc:relation/bflc:Relation[not(rdfs:label) and not(madsrdf:authoritativeLabel)]/@rdf:about | ../bflc:relation/@rdf:resource">
+        <var name="vRelationURI">
+          <switch>
+            <case test="contains(.,'id.loc.gov/entities')"><transform><xsl:value-of select="."/></transform></case>
+          </switch>
+        </var>
+        <var name="vRelationLabel">
+          <switch>
+            <case test="parent::node()/marc:record">
+              <transform><xsl:copy-of select="parent::node()/marc:record"/></transform>
+            </case>
+            <case test="$vRelationURI != ''">
+              <transform>
+                <xsl:call-template name="tGetLabel">
+                  <xsl:with-param name="pUri" select="$vRelationURI"/>
+                </xsl:call-template>
+              </transform>
+            </case>
+          </switch>
+        </var>
+        <sf code="i">
+          <transform><xsl:value-of select="$vRelationLabel"/></transform>
+        </sf>
+      </select>
+      <transform>
+        <xsl:for-each select="ancestor::bf:Relation/bf:relationship[
+          ( 
+          @rdf:resource and 
+          not(contains($vRelStrs, @rdf:resource)) and 
+          not(contains(@rdf:resource, 'ontologies/bibframe'))
+          ) or
+          ( 
+          bf:Relationship/@rdf:about and 
+          not(contains($vRelStrs, bf:Relationship/@rdf:about)) and
+          not(contains(bf:Relationship/@rdf:about, 'ontologies/bibframe'))
+          )
+          ]/bf:Relationship[rdfs:label or madsrdf:authoritativeLabel] 
+          
+          | 
+          
+          ancestor::bflc:Relationship/bflc:relation[
+          ( 
+          @rdf:resource and 
+          not(contains($vRelStrs, @rdf:resource)) and 
+          not(contains(@rdf:resource, 'ontologies/bibframe'))
+          ) or
+          ( 
+          bf:Relationship/@rdf:about and 
+          not(contains($vRelStrs, bf:Relationship/@rdf:about)) and
+          not(contains(bf:Relationship/@rdf:about, 'ontologies/bibframe'))
+          )
+          ]/bflc:Relation[rdfs:label or madsrdf:authoritativeLabel] 
+          
+          ">
+          <marc:subfield code="i">
+            <xsl:choose>
+              <xsl:when test="madsrdf:authoritativeLabel">
+                <xsl:value-of select="madsrdf:authoritativeLabel" />
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="rdfs:label" />
+              </xsl:otherwise>
+            </xsl:choose>
+          </marc:subfield>
+        </xsl:for-each>
+      </transform>
+    </var>
+    <var name="vShared">
+      <transform>
+        <xsl:for-each select="ancestor::bf:Relation/bf:relationship[
+          ( 
+          @rdf:resource and 
+          not(contains($vRelStrs, @rdf:resource)) and 
+          not(contains(@rdf:resource, 'ontologies/bibframe'))
+          ) or
+          ( 
+          bf:Relationship/@rdf:about and 
+          not(contains($vRelStrs, bf:Relationship/@rdf:about)) and
+          not(contains(bf:Relationship/@rdf:about, 'ontologies/bibframe'))
+          )
+          ]//@rdf:* 
+          
+          | 
+          
+          ancestor::bflc:Relationship/bflc:relation[
+          ( 
+          @rdf:resource and 
+          not(contains($vRelStrs, @rdf:resource)) and 
+          not(contains(@rdf:resource, 'ontologies/bibframe'))
+          ) or
+          ( 
+          bf:Relationship/@rdf:about and 
+          not(contains($vRelStrs, bf:Relationship/@rdf:about)) and
+          not(contains(bf:Relationship/@rdf:about, 'ontologies/bibframe'))
+          )
+          ]//@rdf:*
+          
+          ">
+          <marc:subfield code="4"><xsl:value-of select="." /></marc:subfield>
+        </xsl:for-each>
+      </transform>
+      <switch>
+        <case test="contains($relURI,'resources/hubs/')">
+          <sf code="1">
+            <transform><xsl:value-of select="$relURI" /></transform>
+          </sf>
+        </case>
+      </switch>
+    </var>
+    
+    <switch>
+      <case test="$vRelResource//marc:datafield[@tag!='']">
+        <df tag="$vAddRelationMarcKeyTag">
+          <ind1 default=" ">
+            <switch>
+              <case test="$vAddRelationMarcKeyTag = '730'">
+                <switch>
+                  <case test="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1 != '' and $vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1 != ' '">
+                    <select xpath="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1" />
+                  </case>
+                  <case test="default">0</case>
+                </switch>
+              </case>
+              <case test="default">
+                <select xpath="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1" />
+              </case>
+            </switch>
+          </ind1>
+          <ind2 default=" ">
+            <switch>
+              <case test="ancestor::bf:Relation/bf:relationship//@rdf:*[.='http://id.loc.gov/vocabulary/relationship/part']">2</case>
+              <case test="ancestor::bf:Relation/bf:relationship//@rdf:*[.='http://id.loc.gov/vocabulary/relationship/containerof']">2</case>
+              <case test="ancestor::bf:Relation/bf:relationship//@rdf:*[.='http://id.loc.gov/entities/relationships/containerof']">2</case>
+              <case test="ancestor::bf:Relation/bf:relationship//@rdf:*[.='http://id.loc.gov/ontologies/bibframe/hasPart']">2</case>
+              <case test="ancestor::bflc:Relationship/bflc:relation//@rdf:*[.='http://id.loc.gov/ontologies/bibframe/hasPart']">2</case>
+              <case test="self::bf:hasPart or ancestor::bf:hasPart">2</case>
+            </switch>
+          </ind2>
+          <switch>
+            <case test="$vRelVariant//marc:datafield[@tag!='']">
+              <!-- We have a variant, so we need to create an 880 link. -->
+              <sf code="6"><transform><xsl:value-of select="concat('880-', 63 + position())"/></transform></sf>   
+            </case>
+          </switch>
+          <transform>
+            <xsl:copy-of select="$iSubfieldShared" />
+          </transform>
+    
+          <switch>
+            <case test="$vRelResource//marc:datafield[starts-with(@tag, '1')]">
+              <transform>
+                <xsl:for-each select="$vRelResource//marc:datafield[starts-with(@tag, '1')]/marc:subfield[contains($vValidSubfields,@code)]">
+                  <marc:subfield>
+                    <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                    <xsl:value-of select="."/>
+                  </marc:subfield>
+                </xsl:for-each>
+              </transform>
+            </case>
+          </switch>
+          <switch>
+            <case test="$vRelResource//marc:datafield[@tag = '240'] and $vAddRelationMarcKeyTag != '730'">
+              <transform>
+                <xsl:for-each select="$vRelResource//marc:datafield[@tag = '240']/marc:subfield[contains('adfghklmnoprs',@code)]">
+                  <marc:subfield>
+                    <xsl:choose>
+                      <xsl:when test="@code = 'a'">
+                        <xsl:attribute name="code">t</xsl:attribute>
+                      </xsl:when>
+                      <xsl:otherwise>
+                        <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                      </xsl:otherwise>
+                    </xsl:choose>
+                    <xsl:value-of select="."/>
+                  </marc:subfield>
+                </xsl:for-each>
+              </transform>
+            </case>
+          </switch>
+          <transform>
+            <xsl:copy-of select="$vShared" />
+          </transform>
+          <switch>
+            <case test="$vLangTagLabel!=''">
+              <sf code="7">
+                <transform>
+                  <xsl:variable name="bcp47code">
+                    <xsl:call-template name="tOutputBCP47">
+                      <xsl:with-param name="bcp47orig" select="$vLangTagLabel" />
+                    </xsl:call-template>
+                  </xsl:variable>
+                  <xsl:value-of select="concat('(bcp47)', $bcp47code)" />
+                </transform>
+              </sf>
+            </case>
+          </switch>
+        </df>
+      </case>
+    </switch>
+    
+    <switch>
+      <case test="$vRelVariant//marc:datafield[@tag!='']">
+        <!-- We have a variant, so we need to create an 880. -->
+        <df tag="880">
+          <ind1 default=" ">
+            <switch>
+              <case test="$vAddRelationMarcKeyTag = '730'">
+                <switch>
+                  <case test="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1 != '' and $vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1 != ' '">
+                    <select xpath="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1" />
+                  </case>
+                  <case test="default">0</case>
+                </switch>
+              </case>
+              <case test="default">
+                <select xpath="$vRelResource//marc:datafield[starts-with(@tag, '1')]/@ind1" />
+              </case>
+            </switch>
+          </ind1>
+          <ind2 default=" ">
+            <switch>
+              <case test="ancestor::bf:Relation/bf:relationship//@rdf:*[.='http://id.loc.gov/vocabulary/relationship/part']">2</case>
+              <case test="ancestor::bf:Relation/bf:relationship//@rdf:*[.='http://id.loc.gov/ontologies/bibframe/hasPart']">2</case>
+              <case test="ancestor::bflc:Relationship/bflc:relation//@rdf:*[.='http://id.loc.gov/ontologies/bibframe/hasPart']">2</case>
+              <case test="self::bf:hasPart or ancestor::bf:hasPart">2</case>
+            </switch>
+          </ind2>
+          <sf code="6">
+            <switch>
+              <case test="$vRelResource//marc:datafield[@tag!='']">
+                <transform><xsl:value-of select="concat($vAddRelationMarcKeyTag, '-', 63 + position(), '/', $v880Script)"/></transform>
+              </case>
+              <case test="default">
+                <transform><xsl:value-of select="concat($vAddRelationMarcKeyTag, '-00', '/', $v880Script)"/></transform>
+              </case>
+            </switch>
+          </sf>
+          <transform>
+            <xsl:copy-of select="$iSubfieldShared" />
+          </transform>
+          <transform>
+            <xsl:for-each select="$vRelVariant//marc:datafield/marc:subfield[contains($vValidSubfields,@code)]">
+              <marc:subfield>
+                <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                <xsl:value-of select="."/>
+              </marc:subfield>
+            </xsl:for-each>
+            <xsl:copy-of select="$vShared" />
+          </transform>
+          <sf code="7">
+            <transform>
+              <xsl:variable name="bcp47code">
+                <xsl:call-template name="tOutputBCP47">
+                  <xsl:with-param name="bcp47orig" select="$vLangTagScript" />
+                </xsl:call-template>
+              </xsl:variable>
+              <xsl:value-of select="concat('(bcp47)', $bcp47code)" />
+            </transform>
+          </sf>
+        </df>
+      </case>
+    </switch>
+  </select>
+  
+  
+  <!-- 
+    This handles patterns for what will become a Name added entry or Name/Title, Title Entry.
+    No URIs for Hubs or Agents.  No marcKeys.
+  -->
+  <df tag="$vAddEntryTag" lang-xpath="rdfs:label" lang-prefer="transliterated">
+    <context xpath="bf:Work/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/*[(not(contains(@rdf:about, 'id.loc.gov')) or contains(@rdf:about, 'REPLACE')) and not(bflc:marcKey)] |
+                    bf:Work/bf:relation/bf:Relation/bf:associatedResource/bf:*[(not(contains(@rdf:about, 'id.loc.gov')) or contains(@rdf:about, 'REPLACE')) and not(bflc:marcKey) and not(bf:hasInstance)]/bf:contribution/*/bf:agent/*[(not(contains(@rdf:about, 'id.loc.gov')) or contains(@rdf:about, 'REPLACE')) and not(bflc:marcKey)] |
+                    bf:Work/bf:relatedTo/bf:*[(not(contains(@rdf:about, 'id.loc.gov')) or contains(@rdf:about, 'REPLACE')) and not(bflc:marcKey) and not(bf:hasInstance)]/bf:contribution/*/bf:agent/* |
+                    bf:Work/bf:hasPart/bf:*[(not(contains(@rdf:about, 'id.loc.gov')) or contains(@rdf:about, 'REPLACE')) and not(bflc:marcKey)]/bf:contribution/*/bf:agent/* |
+                    bf:Instance/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/*[(not(contains(@rdf:about, 'id.loc.gov')) or contains(@rdf:about, 'REPLACE')) and not(bflc:marcKey)] |
+                    //bf:Item/bf:contribution/*[not(local-name()='PrimaryContribution') and not(rdf:type[contains(@rdf:resource, '/PrimaryContribution')])]/bf:agent/*[(not(contains(@rdf:about, 'id.loc.gov')) or contains(@rdf:about, 'REPLACE')) and not(bflc:marcKey)] |
+                    //bf:Item/bf:relatedTo/bf:*[(not(contains(@rdf:about, 'id.loc.gov')) or contains(@rdf:about, 'REPLACE')) and not(bflc:marcKey)]/bf:contribution/*/bf:agent/* |
+                    //bf:Item/bf:hasPart/bf:*[(not(contains(@rdf:about, 'id.loc.gov')) or contains(@rdf:about, 'REPLACE')) and not(bflc:marcKey)]/bf:contribution/*/bf:agent/*">
+      <var name="vNameAuthPreNS">
+        <!-- only look up id.loc.gov name authorities -->
+        <switch>
+          <case test="bflc:marcKey">
+            <transform>
+              <xsl:call-template name="tGetRelResource">
+                <xsl:with-param name="pUri" select="@rdf:about"/>
+                <xsl:with-param name="pContext" select="."/>
+              </xsl:call-template>
+            </transform>
+          </case>
+        </switch>
+      </var>
+      <var name="vNameAuth" xpath="exsl:node-set($vNameAuthPreNS)" />
+      <var name="vAddEntryTag">
+        <switch>
+          <case test="local-name()='Uncontrolled' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bflc/Uncontrolled']">720</case>
+          <case test="local-name()='PersonalName' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#PersonalName'] or
+                      local-name()='FamilyName' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#FamilyName'] or
+                      local-name()='Person' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Person'] or
+                      local-name()='Family' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Family']">700</case>
+          <case test="local-name()='CorporateName' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#CorporateName'] or
+                      local-name()='Organization' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Organization'] or
+                      local-name()='Jurisdiction' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Jurisdiction']">710</case>
+          <case test="local-name()='ConferenceName' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#ConferenceName'] or
+                      local-name()='Meeting' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Meeting']">711</case>
+          <case test="default">720</case>
+        </switch>
+      </var>
+      <var name="vNameAuthTag">
+        <switch>
+          <case test="$vAddEntryTag='710'">110</case>
+          <case test="$vAddEntryTag='711'">111</case>
+          <case test="default">100</case>
+        </switch>
+      </var>
+      <var name="vAuthSubfields">
+        <switch>
+          <case test="$vNameAuthTag='100'">abcdgjq</case>
+          <case test="$vNameAuthTag='110'">abcdgn</case>
+          <case test="$vNameAuthTag='111'">acdegnq</case>
+        </switch>
+      </var>
+      <var name="vSourceUri">
+        <switch>
+          <case test="bf:source/@rdf:resource"><transform><xsl:value-of select="bf:source/@rdf:resource"/></transform></case>
+          <case test="bf:source/bf:Source/@rdf:about"><transform><xsl:value-of select="bf:source/bf:Source/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <var name="vWorkUri">
+        <transform><xsl:value-of select="../../../../@rdf:about"/></transform>
+      </var>
+      
+      <var name="vTitleResourcePreNS">
+        <!-- only look up id.loc.gov name authorities -->
+        <switch>
+          <case test="../../../../bf:title/bf:Title/bflc:marcKey">
+            <transform>
+              <xsl:call-template name="tGetRelResource">
+                <xsl:with-param name="pUri" select="@rdf:about"/>
+                <xsl:with-param name="pContext" select="../../../../bf:title/bf:Title"/>
+              </xsl:call-template>
+            </transform>
+          </case>
+        </switch>
+      </var>
+      <var name="vTitleResource" xpath="exsl:node-set($vTitleResourcePreNS)" />
+      <var name="vTitleTag">
+        <switch>
+          <case test="$vAddEntryTag='710'">110</case>
+          <case test="$vAddEntryTag='711'">111</case>
+          <case test="default">100</case>
+        </switch>
+      </var>
+      <var name="vTitleSubfields">
+        <switch>
+          <case test="$vTitleTag='100'">fhklmnoprst</case>
+          <case test="$vTitleTag='110'">fhklmnoprst</case>
+          <case test="$vTitleTag='111'">fhklnpst</case>
+        </switch>
+      </var>
+      
+      <ind1 default="2">
+        <switch>
+          <case test="exsl:node-set($vNameAuth)//marc:datafield[@tag=$vNameAuthTag]">
+            <transform><xsl:value-of select="exsl:node-set($vNameAuth)//marc:datafield[@tag=$vNameAuthTag]/@ind1"/></transform>
+          </case>
+          <case test="$vAddEntryTag='700'">
+            <switch>
+              <case test="contains(local-name(),'Family')">3</case>
+              <case test="default">1</case>
+            </switch>
+          </case>
+          <case test="$vAddEntryTag='710'">
+            <switch>
+              <case test="local-name()='Jurisdiction' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Jurisdiction']">1</case>
+            </switch>
+          </case>
+          <case test="$vAddEntryTag='720'">
+            <switch>
+              <case test="local-name()='Person' or rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Person']">1</case>
+              <case test="default"><text> </text></case>
+            </switch>
+          </case>
+        </switch>
+      </ind1>
+      <ind2 default=" ">
+        <switch>
+          <case test="ancestor::bf:hasPart">2</case>
+        </switch>
+      </ind2>
+      <switch>
+        <case test="$vAddEntryTag='720'">
+          <!-- 720 created if class of added entry doesn't match...it's a much more sparse field, some data may be lost -->
+          <sf code="a" chopPunct="true" repeatable="false">
+            <select xpath="rdfs:label"/>
+          </sf>
+          <sf code="e" chopPunct="true">
+            <select xpath="../../bf:role/*[rdfs:label or madsrdf:authoritativeLabel]">
+              <switch>
+                <case test="madsrdf:authoritativeLabel">
+                  <select xpath="madsrdf:authoritativeLabel">
+                    <transform><xsl:value-of select="translate(., $upper, $lower)"></xsl:value-of></transform>
+                  </select>
+                </case>
+                <case test="default">
+                  <select xpath="rdfs:label">
+                    <transform><xsl:value-of select="translate(., $upper, $lower)"></xsl:value-of></transform>
+                  </select>
+                </case>
+              </switch>
+            </select>
+          </sf>
+          <sf code="4">
+            <select xpath="../../bf:role/*[madsrdf:code or bf:code]">
+              <switch>
+                <case test="madsrdf:code">
+                  <select xpath="madsrdf:code"/>
+                </case>
+                <case test="default"><select xpath="bf:code"/></case>
+              </switch>
+            </select>
+          </sf>
+          <sf code="4">
+            <select xpath="../../bf:role/bf:Role/@rdf:about|../../bf:role/@rdf:resource"/>
+          </sf>
+        </case>
+        <case test="default">
+          <sf code="3" chopPunct="true" repeatable="false">
+            <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label|../../../../bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+          </sf>
+          <!-- seem to have to hack this to get a match on @rdf:about attribute? -->
+          <transform>
+            <xsl:for-each select="../../../../../../bflc:relationship/bflc:Relationship[bf:relatedTo/@rdf:resource=$vWorkUri]/bflc:relation/bflc:Relation/rdfs:label">
+              <marc:subfield code="i">
+                <xsl:call-template name="tChopPunct">
+                  <xsl:with-param name="pString" select="."/>
+                </xsl:call-template>
+              </marc:subfield>
+            </xsl:for-each>
+          </transform>
+
+          <!-- name subfields -->
+          <switch>
+            <case test="exsl:node-set($vNameAuth)//marc:datafield[@tag=$vNameAuthTag]">
+              <transform>
+                <xsl:for-each select="exsl:node-set($vNameAuth)//marc:datafield[@tag=$vNameAuthTag]/marc:subfield[contains($vAuthSubfields,@code)]">
+                  <marc:subfield>
+                    <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                    <xsl:value-of select="."/>
+                  </marc:subfield>
+                </xsl:for-each>
+              </transform>
+            </case>
+            <case test="default">
+              <sf code="a" chopPunct="true" repeatable="false">
+                <switch>
+                  <case test="madsrdf:elementList">
+                    <select xpath="madsrdf:elementList/*[1]/madsrdf:elementValue"/>
+                  </case>
+                  <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+                  <case test="default"><select xpath="rdfs:label"/></case>
+                </switch>
+              </sf>
+              <switch>
+                <case test="$vAddEntryTag='710'">
+                  <sf code="b" chopPunct="true">
+                    <select xpath="madsrdf:elementList/*[position() &gt; 1]/madsrdf:elementValue"/>
+                  </sf>
+                </case>
+              </switch>
+              <switch>
+                <case test="$vAddEntryTag='700'">
+                  <sf code="c" chopPunct="true">
+                    <select xpath="madsrdf:elementList/madsrdf:TermsOfAddressNameElement/madsrdf:elementValue"/>
+                  </sf>
+                </case>
+              </switch>
+              <switch>
+                <case test="$vAddEntryTag='711'">
+                  <sf code="c" chopPunct="true">
+                    <select xpath="madsrdf:elementList/*[local-name()='GeographicElement' and position() &gt; 1]/madsrdf:elementValue"/>
+                  </sf>
+                </case>
+              </switch>
+              <switch>
+                <case test="$vAddEntryTag='700'">
+                  <sf code="d" chopPunct="true" repeatable="false">
+                    <select xpath="madsrdf:elementList/madsrdf:DateNameElement/madsrdf:elementValue"/>
+                  </sf>
+                </case>
+              </switch>
+              <switch>
+                <case test="$vAddEntryTag='700'">
+                  <sf code="q" chopPunct="true" repeatable="false"><select xpath="madsrdf:fullerName/*/rdfs:label"/></sf>
+                </case>
+              </switch>
+              <switch>
+                <case test="$vAddEntryTag='711'">
+                  <sf code="q" chopPunct="true">
+                    <select xpath="madsrdf:elementList/*[local-name()='NameElement' and position() &gt; 1]/madsrdf:elementValue"/>
+                  </sf>
+                </case>
+              </switch>
+            </case>
+          </switch>
+          <switch>
+            <case test="$vAddEntryTag='711'">
+              <sf code="j" chopPunct="true">
+                <select xpath="../../bf:role/*[rdfs:label or madsrdf:authoritativeLabel]">
+                  <switch>
+                    <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+                    <case test="default"><select xpath="rdfs:label"/></case>
+                  </switch>
+                </select>
+              </sf>
+            </case>
+            <case test="default">
+              <sf code="e" chopPunct="true">
+                <select xpath="../../bf:role/*[rdfs:label or madsrdf:authoritativeLabel]">
+                  <switch>
+                    <case test="madsrdf:authoritativeLabel">
+                      <select xpath="madsrdf:authoritativeLabel">
+                        <transform><xsl:value-of select="translate(., $upper, $lower)"></xsl:value-of></transform>
+                      </select>
+                    </case>
+                    <case test="default">
+                      <select xpath="rdfs:label">
+                        <transform><xsl:value-of select="translate(., $upper, $lower)"></xsl:value-of></transform>
+                      </select>
+                    </case>
+                  </switch>
+                </select>
+              </sf>
+            </case>
+          </switch>
+          <!-- nac $u -->
+          <sf code="4">
+            <select xpath="../../bf:role/*[madsrdf:code or bf:code]">
+              <switch>
+                <case test="madsrdf:code">
+                  <select xpath="madsrdf:code"/>
+                </case>
+                <case test="default"><select xpath="bf:code"/></case>
+              </switch>
+            </select>
+          </sf>
+          <sf code="4">
+            <select xpath="../../bf:role/bf:Role/@rdf:about|../../bf:role/@rdf:resource"/>
+          </sf>
+          <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and 
+                                        not(contains(.,'REPLACE')) and 
+                                        not(contains(., 'id.oclc.org/worldcat/entity/')) and
+                                        not(contains(., 'isni.org/isni/')) and
+                                        (contains(., 'viaf.org/') and contains(., '#'))]"/></sf>
+          <sf code="0">
+            <select xpath="bf:identifiedBy/bf:Identifier">
+              <transform>
+                <xsl:variable name="vIdType">
+                  <xsl:call-template name="tChopPunct">
+                    <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+                  </xsl:call-template>
+                </xsl:variable>
+                <xsl:choose>
+                  <xsl:when test="$vIdType != ''"><xsl:value-of select="concat('(',$vIdType,')',rdf:value)"/></xsl:when>
+                  <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+                </xsl:choose>
+              </transform>
+            </select>
+          </sf>
+          <sf code="1"><select xpath="@rdf:about[
+                            contains(., 'id.oclc.org/worldcat/entity/') or 
+                            contains(., 'isni.org/isni/') or
+                            (contains(., 'viaf.org/') and not(contains(., '#')))]"/></sf>
+
+          <!-- title subfields -->
+          <switch>
+            <case test="exsl:node-set($vTitleResource)//marc:datafield[@tag=$vTitleTag]">
+              <transform>
+                <xsl:for-each select="exsl:node-set($vTitleResource)//marc:datafield[@tag=$vTitleTag]/marc:subfield[contains($vTitleSubfields,@code)]">
+                  <marc:subfield>
+                    <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                    <xsl:value-of select="."/>
+                  </marc:subfield>
+                </xsl:for-each>
+              </transform>
+            </case>
+            <case test="default">
+          <select xpath="ancestor::bf:Hub">
+            <sf code="t" chopPunct="true" repeatable="false"><select xpath="bf:title/bf:Title/bf:mainTitle"/></sf>
+            <sf code="d" chopPunct="true"><select xpath="bf:legalDate"/></sf>
+            <sf code="f" chopPunct="true" repeatable="false"><select xpath="bf:originDate"/></sf>
+            <sf code="m" chopPunct="true"><select xpath="bf:musicMedium/bf:MusicMedium/rdfs:label"/></sf>
+            <sf code="n" chopPunct="true"><select xpath="bf:title/bf:Title[not(contains(rdf:type/@rdf:resource,'bibframe'))][1]/bf:partNumber"/></sf>
+            <sf code="p" chopPunct="true"><select xpath="bf:title/bf:Title[not(contains(rdf:type/@rdf:resource,'bibframe'))][1]/bf:partName"/></sf>
+            <sf code="r" chopPunct="true" repeatable="false"><select xpath="bf:musicKey"/></sf>
+            <sf code="s" chopPunct="true"><select xpath="bf:version"/></sf>
+          </select>
+            </case>
+          </switch>
+            <select xpath="ancestor::bf:Hub">
+            <sf code="x" repeatable="false" chopPunct="true"><select xpath="bf:identifier/*[local-name()=Issn or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Issn']/rdf:value"/></sf>
+            <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+            <sf code="0">
+              <select xpath="bf:identifiedBy/bf:Identifier">
+                <transform>
+                  <xsl:variable name="vIdType">
+                    <xsl:call-template name="tChopPunct">
+                      <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+                    </xsl:call-template>
+                  </xsl:variable>
+                  <xsl:choose>
+                    <xsl:when test="$vIdType != ''"><xsl:value-of select="concat('(',$vIdType,')',rdf:value)"/></xsl:when>
+                    <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+                  </xsl:choose>
+                </transform>
+              </select>
+            </sf>
+          </select>
+          <switch>
+            <case test="$vSourceUri != '' or bf:source/bf:Source/bf:code or bf:source/bf:Source/rdfs:label">
+              <sf code="2">
+                <switch>
+                  <case test="bf:source/bf:Source/bf:code"><transform><xsl:value-of select="bf:source/bf:Source/bf:code"/></transform></case>
+                  <case test="$vSourceUri != ''">
+                    <switch>
+                      <case test="contains($vSourceUri,'id.loc.gov')">
+                        <transform>
+                          <xsl:call-template name="tUriCode">
+                            <xsl:with-param name="pUri" select="$vSourceUri"/>
+                          </xsl:call-template>
+                        </transform>
+                      </case>
+                      <case test="default"><transform><xsl:value-of select="$vSourceUri"/></transform></case>
+                    </switch>
+                  </case>
+                  <case test="default"><transform><xsl:value-of select="bf:source/bf:Source/rdfs:label"/></transform></case>
+                </switch>
+              </sf>
+            </case>
+          </switch>
+          <sf code="5" repeatable="false">
+            <select xpath="../../bflc:applicableInstitution/*/bf:code"/>
+          </sf>
+        </case>
+      </switch>
+    </context>
+  </df>
+
+  <df tag="730" lang-xpath="rdfs:label" lang-prefer="transliterated">
+    <context xpath="bf:Work/bf:relation/bf:Relation/bf:associatedResource/bf:Hub[not(bf:contribution) and not(contains(@rdf:about, 'hubs')) and not(bflc:marcKey)] |
+                    bf:Work/bf:relatedTo/bf:Hub[not(bf:contribution) and not(contains(@rdf:about, 'hubs')) and not(bflc:marcKey)] |
+                    //bf:Item/bf:relatedTo/bf:Hub[not(bf:contribution) and not(contains(@rdf:about, 'hubs')) and not(bflc:marcKey)] |
+                    bf:Work/bf:hasPart/bf:Hub[not(bf:contribution) and not(contains(@rdf:about, 'hubs')) and not(bflc:marcKey)] |
+                    //bf:Item/bf:hasPart/bf:Hub[not(bf:contribution) and not(contains(@rdf:about, 'hubs')) and not(bflc:marcKey)]">
+     
+      <var name="vTitleResourcePreNS">
+        <switch>
+          <case test="bf:title/bf:Title/bflc:marcKey">
+            <transform>
+              <xsl:call-template name="tGetRelResource">
+                <xsl:with-param name="pUri" select="@rdf:about"/>
+                <xsl:with-param name="pContext" select="bf:title/bf:Title"/>
+              </xsl:call-template>
+            </transform>
+          </case>
+        </switch>
+      </var>
+      <var name="vTitleResource" xpath="exsl:node-set($vTitleResourcePreNS)" />
+      
+      <ind1 default="0">
+        <switch>
+          <case test="bf:title/bf:Title[not(contains(rdf:type/@rdf:resource,'bibframe'))][1]/bflc:nonSortNum">
+            <transform>
+              <xsl:value-of select="bf:title/bf:Title[not(contains(rdf:type/@rdf:resource,'bibframe'))][1]/bflc:nonSortNum"/>
+            </transform>
+          </case>
+          <case test="bf:title/bf:Title[not(contains(rdf:type/@rdf:resource,'bibframe'))][1]/bflc:titleSortKey and (string-length(bf:title/bf:Title[not(contains(rdf:type/@rdf:resource,'bibframe'))][1]/bflc:titleSortKey) &lt; string-length(bf:title/bf:Title[not(contains(rdf:type/@rdf:resource,'bibframe'))][1]/bf:mainTitle))">
+            <transform>
+              <xsl:value-of select="string-length(bf:title/bf:Title[not(contains(rdf:type/@rdf:resource,'bibframe'))][1]/bf:mainTitle) - string-length(bf:title/bf:Title[not(contains(rdf:type/@rdf:resource,'bibframe'))][1]/bflc:titleSortKey)"/>
+            </transform>
+          </case>
+        </switch>
+      </ind1>
+      <ind2 default=" ">
+        <switch>
+          <case test="local-name(parent::*)='hasPart'">2</case>
+        </switch>
+      </ind2>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+      </sf>
+      <!-- seem to have to hack this to get a match on @rdf:about attribute? -->
+      <transform>
+        <xsl:variable name="vNodeUri" select="@rdf:about"/>
+        <xsl:for-each select="../../bflc:relationship/bflc:Relationship[bf:relatedTo/@rdf:resource=$vNodeUri or bf:relatedTo=$vNodeUri]/bflc:relation/bflc:Relation/rdfs:label">
+          <marc:subfield code="i">
+            <xsl:call-template name="tChopPunct">
+              <xsl:with-param name="pString" select="."/>
+            </xsl:call-template>
+          </marc:subfield>
+        </xsl:for-each>
+      </transform>
+      
+      <!-- title subfields -->
+      <switch>
+        <case test="$vTitleResource//marc:datafield[@tag='130']">
+          <transform>
+            <xsl:for-each select="$vTitleResource//marc:datafield[@tag='130']/marc:subfield[contains('adfghklmnoprst',@code)]">
+              <marc:subfield>
+                <xsl:attribute name="code"><xsl:value-of select="@code"/></xsl:attribute>
+                <xsl:value-of select="."/>
+              </marc:subfield>
+            </xsl:for-each>
+          </transform>
+        </case>
+        <case test="default">
+      <sf code="a" chopPunct="true" repeatable="false"><select xpath="bf:title/bf:Title/bf:mainTitle"/></sf>
+      <sf code="d"><select xpath="bf:legalDate"/></sf>
+      <sf code="f" repeatable="false"><select xpath="bf:originDate"/></sf>
+      <sf code="m" chopPunct="true"><select xpath="bf:musicMedium/bf:MusicMedium/rdfs:label"/></sf>
+      <sf code="n" chopPunct="true"><select xpath="bf:title/bf:Title/bf:partNumber"/></sf>
+      <sf code="p" chopPunct="true"><select xpath="bf:title/bf:Title/bf:partName"/></sf>
+      <switch>
+        <case test="rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Arrangement'">
+          <sf code="o">arranged</sf>
+        </case>
+      </switch>
+      <sf code="r" chopPunct="true"><select xpath="bf:musicKey"/></sf>
+      <sf code="s" chopPunct="true"><select xpath="bf:version"/></sf>
+      <sf code="x" repeatable="false" chopPunct="true"><select xpath="bf:identifier/*[local-name()=Issn or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Issn']/rdf:value"/></sf>
+        </case>
+      </switch>
+ 
+      <sf code="2"><select xpath="bf:source/bf:Source/bf:code"/></sf>
+      <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vIdType">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vIdType != ''"><xsl:value-of select="concat('(',$vIdType,')',rdf:value)"/></xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="5" repeatable="false">
+        <select xpath="bflc:applicableInstitution/*/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <!--
+  <df tag="740">
+    <context xpath="bf:Work/bf:relation/bf:Relation/bf:associatedResource/bf:Work[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/Uncontrolled'] |
+                    bf:Work/bf:relatedTo/bf:Work[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/Uncontrolled'] |
+                    bf:Work/bf:hasPart/bf:Work[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/Uncontrolled']">
+      <ind1 default="0"/>
+      <ind2 default=' '>
+        <switch>
+          <case test="local-name(..)='hasPart'">2</case>
+        </switch>
+      </ind2>
+      <sf code="a" repeatable="false"><select xpath="bf:title/bf:Title/bf:mainTitle"/></sf>
+      <sf code="n"><select xpath="bf:partNumber"/></sf>
+      <sf code="p"><select xpath="bf:partName"/></sf>
+      <sf code="5" repeatable="false">
+        <select xpath="bflc:applicableInstitution/*/bf:code"/>
+      </sf>
+    </context>
+  </df>
+  -->
+  <!-- 740 -->
+  <select xpath="bf:Work/bf:relation/bf:Relation/bf:associatedResource/bf:Work[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/Uncontrolled'] |
+    bf:Work/bf:relation/bf:Relation/bf:associatedResource/bflc:Uncontrolled[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Work'] |
+    bf:Work/bf:relatedTo/bf:Work[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/Uncontrolled'] |
+    bf:Work/bf:hasPart/bf:Work[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/Uncontrolled']">
+    
+    <var name="vLangTagLabel">
+      <transform>
+        <xsl:call-template name="tGetBCP47RegField">
+          <xsl:with-param name="x" select="bf:title/bf:Title/bf:mainTitle" />
+        </xsl:call-template>
+      </transform>
+    </var>
+    <var name="vLangTagScript">
+      <transform>
+        <xsl:call-template name="tGetBCP47for880">
+          <xsl:with-param name="x" select="bf:title/bf:Title/bf:mainTitle" />
+          <xsl:with-param name="bcp47forRegField" select="$vLangTagLabel" />
+        </xsl:call-template>
+      </transform>
+    </var>
+    
+    <var name="vScript"><transform><xsl:value-of select="substring-after($vLangTagScript,'-')" /></transform></var>
+    <var name="v880Script">
+      <lookup map="df880script" targetField="code">
+        <lookupField name="lang" xpath="$vScript"/>
+      </lookup>
+    </var>
+    
+    <var name="vOccurrenceNumber">
+      <transform>
+        <xsl:if test="$vLangTagScript != ''">
+          <xsl:variable name="prevRelationCount" select="position()" />
+          <xsl:value-of select="6 + $prevRelationCount" />
+        </xsl:if>
+      </transform>
+    </var>
+    
+    <df tag="740">
+      <ind1 default="0"/>
+      <ind2 default=' '>
+        <switch>
+          <case test="local-name(..)='hasPart'">2</case>
+        </switch>
+      </ind2>
+      <switch>
+        <case test="$vLangTagScript != ''">
+          <sf code="6"><transform><xsl:value-of select="concat('880-9', $vOccurrenceNumber)" /></transform></sf>
+        </case>
+      </switch>
+      <sf code="a" repeatable="false"><select xpath="bf:title/bf:Title/bf:mainTitle[not(@xml:lang) or @xml:lang=$vLangTagLabel]"/></sf>
+      <sf code="n"><select xpath="bf:partNumber[not(@xml:lang) or @xml:lang=$vLangTagLabel]"/></sf>
+      <sf code="p"><select xpath="bf:partName[not(@xml:lang) or @xml:lang=$vLangTagLabel]"/></sf>
+      <sf code="5" repeatable="false">
+        <select xpath="bflc:applicableInstitution/*/bf:code"/>
+      </sf>
+      <sf code="7">
+        <switch>
+          <case test="$vLangTagLabel!=''">
+            <transform>
+              <xsl:variable name="bcp47code">
+                <xsl:call-template name="tOutputBCP47">
+                  <xsl:with-param name="bcp47orig" select="$vLangTagLabel" />
+                </xsl:call-template>
+              </xsl:variable>
+              <xsl:value-of select="concat('(bcp47)', $bcp47code)" />
+            </transform>
+          </case>
+        </switch>
+      </sf>
+    </df>
+    
+    <switch>
+      <case test="$vLangTagScript != ''">
+        <df tag="880">
+          <ind1 default="0"/>
+          <ind2 default=' '>
+            <switch>
+              <case test="local-name(..)='hasPart'">2</case>
+            </switch>
+          </ind2>
+          <switch>
+            <case test="$vLangTagScript != ''">
+              <sf code="6"><transform><xsl:value-of select="concat('740-9', $vOccurrenceNumber)" /></transform></sf>
+            </case>
+          </switch>
+          <sf code="a" repeatable="false"><select xpath="bf:title/bf:Title/bf:mainTitle[contains(translate(@xml:lang,$upper,$lower), $vScript)]"/></sf>
+          <sf code="n"><select xpath="bf:partNumber[contains(translate(@xml:lang,$upper,$lower), $vScript)]"/></sf>
+          <sf code="p"><select xpath="bf:partName[contains(translate(@xml:lang,$upper,$lower), $vScript)]"/></sf>
+          <sf code="5" repeatable="false">
+            <select xpath="bflc:applicableInstitution/*/bf:code"/>
+          </sf>
+          <sf code="7">
+            <transform>
+              <xsl:variable name="bcp47code">
+                <xsl:call-template name="tOutputBCP47">
+                  <xsl:with-param name="bcp47orig" select="$vLangTagScript" />
+                </xsl:call-template>
+              </xsl:variable>
+              <xsl:value-of select="concat('(bcp47)', $bcp47code)" />
+            </transform>
+          </sf>
+        </df>
+      </case>
+    </switch>
+  </select>
+
+  <df tag="752" lang-xpath="rdfs:label" lang-prefer="transliterated">
+    <context xpath="bf:Work/bf:place/*[local-name()='HierarchicalGeographic' or rdf:type/@rdf:resource='http://www.loc.gov/mads/rdf/v1#HierarchicalGeographic']">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <select xpath="madsrdf:componentList/*">
+        <switch>
+          <case test="local-name()='Country' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#Country']">
+            <sf code="a" chopPunct="true">
+              <switch>
+                <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+                <case test="default"><select xpath="rdfs:label"/></case>
+              </switch>
+            </sf>
+          </case>
+          <case test="local-name()='State' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#State']">
+            <sf code="b" chopPunct="true">
+              <switch>
+                <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+                <case test="default"><select xpath="rdfs:label"/></case>
+              </switch>
+            </sf>
+          </case>
+          <case test="local-name()='County' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#County']">
+            <sf code="c" chopPunct="true">
+              <switch>
+                <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+                <case test="default"><select xpath="rdfs:label"/></case>
+              </switch>
+            </sf>
+          </case>
+          <case test="local-name()='City' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#City']">
+            <sf code="d" chopPunct="true">
+              <switch>
+                <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+                <case test="default"><select xpath="rdfs:label"/></case>
+              </switch>
+            </sf>
+          </case>
+          <case test="local-name()='CitySection' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#CitySection']">
+            <sf code="f" chopPunct="true">
+              <switch>
+                <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+                <case test="default"><select xpath="rdfs:label"/></case>
+              </switch>
+            </sf>
+          </case>
+          <case test="local-name()='Region' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#Region']">
+            <sf code="g" chopPunct="true">
+              <switch>
+                <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+                <case test="default"><select xpath="rdfs:label"/></case>
+              </switch>
+            </sf>
+          </case>
+          <case test="local-name()='ExtraterrestrialArea' or rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#ExtraterrestrialArea']">
+            <sf code="h" chopPunct="true">
+              <switch>
+                <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+                <case test="default"><select xpath="rdfs:label"/></case>
+              </switch>
+            </sf>
+          </case>
+        </switch>
+      </select>
+      <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vIdType">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vIdType != ''"><xsl:value-of select="concat('(',$vIdType,')',rdf:value)"/></xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="e" chopPunct="true">
+        <select xpath="bflc:relationship/bflc:Relationship/bflc:relation/*[rdfs:label or madsrdf:authoritativeLabel]">
+          <switch>
+            <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+            <case test="default"><select xpath="rdfs:label"/></case>
+          </switch>
+        </select>
+      </sf>
+      <sf code="4">
+        <select xpath="bflc:relationship/bflc:Relationship/bflc:relation/*[madsrdf:code or bf:code]">
+          <switch>
+            <case test="madsrdf:code">
+              <select xpath="madsrdf:code"/>
+            </case>
+            <case test="default"><select xpath="bf:code"/></case>
+          </switch>
+        </select>
+      </sf>
+      <sf code="4">
+        <select xpath="bflc:relationship/bflc:Relationship/bflc:relation/*/@rdf:about|bflc:relationship/bflc:Relationship/bflc:relation/@rdf:resource"/>
+      </sf>
+      <sf code="2" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code|*/madsrdf:componentList/*[1]/bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="753" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:systemRequirement/*[
+      local-name() = 'MachineModel' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/MachineModel' or
+      local-name() = 'ProgrammingLanguage' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/ProgrammingLanguage' or
+      local-name() = 'OperatingSystem' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/OperatingSystem']">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="local-name() = 'MachineModel' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/MachineModel'">
+          <sf code="a" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name() = 'ProgrammingLanguage' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/ProgrammingLanguage'">
+          <sf code="b" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name() = 'OperatingSystem' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/OperatingSystem'">
+          <sf code="c" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+      </switch>
+      <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vIdType">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vIdType != ''"><xsl:value-of select="concat('(',$vIdType,')',rdf:value)"/></xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+  
+  <df tag="758" lang-xpath="rdfs:label">
+    <context xpath="
+      bf:Work/bf:relation/bf:Relation[bf:relationship/@rdf:resource and bf:associatedResource/@rdf:resource] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship/bf:Relationship/rdfs:label and bf:associatedResource/@rdf:resource] |
+      bf:Work/bflc:relationship/bflc:Relationship[bflc:relation/@rdf:resource and bf:relatedTo/@rdf:resource] |
+      bf:Work/bflc:relationship/bflc:Relationship[bflc:relation/bflc:Relation/rdfs:label and bf:relatedTo/@rdf:resource]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="4"><select xpath="bf:relationship/@rdf:resource|bf:relationship/bf:Relationship/@rdf:about|bflc:relation/@rdf:resource|bflc:relation/bflc:Relation/@rdf:about"/></sf>
+      <sf code="i"><select xpath="bf:relationship/bf:Relationship/rdfs:label|bflc:relation/bflc:Relation/rdfs:label"/></sf>
+      <sf code="1"><select xpath="bf:associatedResource/@rdf:resource|bf:relatedTo/@rdf:resource"/></sf>
+    </context>
+  </df>
+  
+  <!-- default 884 for all records -->
+  <df tag="758">
+    <context xpath="
+      bf:Work/@rdf:about |
+      bf:Instance[not(rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance')][1]/@rdf:about">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="4">
+        <switch>
+          <case test="ancestor::bf:Work">
+            <transform><xsl:text>http://id.loc.gov/ontologies/bibframe/instanceOf</xsl:text></transform>
+          </case>
+        </switch>
+      </sf>
+      <sf code="1"><select xpath="."/></sf>
+    </context>
+  </df>
+
+  <!-- Linking entries -->
+  <!-- Linking entries -->
+  <df tag="$vLinkTagFromWork2" lang-xpath="rdfs:label">
+    <context xpath="
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'subseries') or contains(bf:Relationship/@rdf:about, 'subseries')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'series') or contains(bf:Relationship/@rdf:about, 'series')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'translationof') or contains(bf:Relationship/@rdf:about, 'translationof')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'translatedas') or contains(bf:Relationship/@rdf:about, 'translatedas')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'supplementto') or contains(bf:Relationship/@rdf:about, 'supplementto')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'supplement') or contains(bf:Relationship/@rdf:about, 'supplement')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'partof') or contains(bf:Relationship/@rdf:about, 'partof')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, '/part') or contains(bf:Relationship/@rdf:about, '/part')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'otheredition') or contains(bf:Relationship/@rdf:about, 'otheredition')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'revisionof') or contains(bf:Relationship/@rdf:about, 'revisionof')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'otherphysicalformat') or contains(bf:Relationship/@rdf:about, 'otherphysicalformat')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'issuedwith') or contains(bf:Relationship/@rdf:about, 'issuedwith')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'continuedinpart') or contains(bf:Relationship/@rdf:about, 'continuedinpart')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'continuationof') or contains(bf:Relationship/@rdf:about, 'continuationof')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'continues') or contains(bf:Relationship/@rdf:about, 'continues')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'precededby') or contains(bf:Relationship/@rdf:about, 'precededby')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'mergerof') or contains(bf:Relationship/@rdf:about, 'mergerof')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'absorbedby') or contains(bf:Relationship/@rdf:about, 'absorbedby')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'absorptionof') or contains(bf:Relationship/@rdf:about, 'absorptionof')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'separatedby') or contains(bf:Relationship/@rdf:about, 'separatedby')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'continuedby') or contains(bf:Relationship/@rdf:about, 'continuedby')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'continuedinpartby') or contains(bf:Relationship/@rdf:about, 'continuedinpartby')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'succeededby') or contains(bf:Relationship/@rdf:about, 'succeededby')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'splitinto') or contains(bf:Relationship/@rdf:about, 'splitinto')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'mergedtoform') or contains(bf:Relationship/@rdf:about, 'mergedtoform')]]/bf:mergedWith/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'mergedtoform') or contains(bf:Relationship/@rdf:about, 'mergedtoform')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'datasource') or contains(bf:Relationship/@rdf:about, 'datasource')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'relatedwork') or contains(bf:Relationship/@rdf:about, 'relatedwork')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'hasSeries') or contains(bf:Relationship/@rdf:about, 'hasSeries')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'hasSubseries') or contains(bf:Relationship/@rdf:about, 'hasSubseries')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'translationOf') or contains(bf:Relationship/@rdf:about, 'translationOf')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'translation') or contains(bf:Relationship/@rdf:about, 'translation')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'supplementTo') or contains(bf:Relationship/@rdf:about, 'supplementTo')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'supplement') or contains(bf:Relationship/@rdf:about, 'supplement')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'partOf') or contains(bf:Relationship/@rdf:about, 'partOf')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'hasPart') or contains(bf:Relationship/@rdf:about, 'hasPart')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'otherEdition') or contains(bf:Relationship/@rdf:about, 'otherEdition')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'otherPhysicalFormat') or contains(bf:Relationship/@rdf:about, 'otherPhysicalFormat')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'issuedWith') or contains(bf:Relationship/@rdf:about, 'issuedWith')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'continuesInPart') or contains(bf:Relationship/@rdf:about, 'continuesInPart')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'continues') or contains(bf:Relationship/@rdf:about, 'continues')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'precededBy') or contains(bf:Relationship/@rdf:about, 'precededBy')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'mergerOf') or contains(bf:Relationship/@rdf:about, 'mergerOf')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'absorbedBy') or contains(bf:Relationship/@rdf:about, 'absorbedBy')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'absorbed') or contains(bf:Relationship/@rdf:about, 'absorbed')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'separatedBy') or contains(bf:Relationship/@rdf:about, 'separatedBy')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'continuedBy') or contains(bf:Relationship/@rdf:about, 'continuedBy')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'continuedInPartBy') or contains(bf:Relationship/@rdf:about, 'continuedInPartBy')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'succeededBy') or contains(bf:Relationship/@rdf:about, 'succeededBy')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'splitInto') or contains(bf:Relationship/@rdf:about, 'splitInto')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'mergedToForm') or contains(bf:Relationship/@rdf:about, 'mergedToForm')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'dataSource') or contains(bf:Relationship/@rdf:about, 'dataSource')]]/bf:associatedResource/bf:*[bf:hasInstance] |
+      bf:Work/bf:relation/bf:Relation[bf:relationship[contains(@rdf:resource, 'relatedTo') or contains(bf:Relationship/@rdf:about, 'relatedTo')]]/bf:associatedResource/bf:*[bf:hasInstance]
+      ">
+      <var name="vLinkTagFromWork2">
+        <switch>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'subseries') or contains(bf:Relationship/@rdf:about, 'subseries')]">762</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'series') or contains(bf:Relationship/@rdf:about, 'series')]">760</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'translationof') or contains(bf:Relationship/@rdf:about, 'translationof')]">765</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'translatedas') or contains(bf:Relationship/@rdf:about, 'translatedas')]">767</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'supplementto') or contains(bf:Relationship/@rdf:about, 'supplementto')]">772</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'supplement') or contains(bf:Relationship/@rdf:about, 'supplement')]">770</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'partof') or contains(bf:Relationship/@rdf:about, 'partof')]">773</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, '/part') or contains(bf:Relationship/@rdf:about, '/part')]">774</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'otheredition') or contains(bf:Relationship/@rdf:about, 'otheredition')]">775</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'revisionof') or contains(bf:Relationship/@rdf:about, 'revisionof')]">775</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'otherphysicalformat') or contains(bf:Relationship/@rdf:about, 'otherphysicalformat')]">776</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'issuedwith') or contains(bf:Relationship/@rdf:about, 'issuedwith')]">777</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedinpart') or contains(bf:Relationship/@rdf:about, 'continuedinpart')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continues') or contains(bf:Relationship/@rdf:about, 'continues')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'precededby') or contains(bf:Relationship/@rdf:about, 'precededby')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'succeededby') or contains(bf:Relationship/@rdf:about, 'succeededby')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'mergerof') or contains(bf:Relationship/@rdf:about, 'mergerof')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'absorbedby') or contains(bf:Relationship/@rdf:about, 'absorbedby')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'absorptionof') or contains(bf:Relationship/@rdf:about, 'absorptionof')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'separatedfrom') or contains(bf:Relationship/@rdf:about, 'separatedfrom')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedby') or contains(bf:Relationship/@rdf:about, 'continuedby')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedinpartby') or contains(bf:Relationship/@rdf:about, 'continuedinpartby')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'splitinto') or contains(bf:Relationship/@rdf:about, 'splitinto')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'mergedtoform') or contains(bf:Relationship/@rdf:about, 'mergedtoform')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'datasource') or contains(bf:Relationship/@rdf:about, 'datasource')]">786</case>
+          
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'hasSeries') or contains(bf:Relationship/@rdf:about, 'hasSeries')]">760</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'hasSubseries') or contains(bf:Relationship/@rdf:about, 'hasSubseries')]">762</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'translationOf') or contains(bf:Relationship/@rdf:about, 'translationOf')]">765</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'translation') or contains(bf:Relationship/@rdf:about, 'translation')]">767</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'supplementTo') or contains(bf:Relationship/@rdf:about, 'supplementTo')]">772</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'supplement') or contains(bf:Relationship/@rdf:about, 'supplement')]">770</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'partOf') or contains(bf:Relationship/@rdf:about, 'partOf')]">773</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'hasPart') or contains(bf:Relationship/@rdf:about, 'hasPart')]">774</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'otherEdition') or contains(bf:Relationship/@rdf:about, 'otherEdition')]">775</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'otherPhysicalFormat') or contains(bf:Relationship/@rdf:about, 'otherPhysicalFormat')]">776</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'issuedWith') or contains(bf:Relationship/@rdf:about, 'issuedWith')]">777</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuesInPart') or contains(bf:Relationship/@rdf:about, 'continuesInPart')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuationof') or contains(bf:Relationship/@rdf:about, 'continuationof')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continues') or contains(bf:Relationship/@rdf:about, 'continues')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'precededBy') or contains(bf:Relationship/@rdf:about, 'precededBy')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'succeededBy') or contains(bf:Relationship/@rdf:about, 'succeededBy')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'mergerOf') or contains(bf:Relationship/@rdf:about, 'mergerOf')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'absorbedBy') or contains(bf:Relationship/@rdf:about, 'absorbedBy')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'absorbed') or contains(bf:Relationship/@rdf:about, 'absorbed')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'separatedFrom') or contains(bf:Relationship/@rdf:about, 'separatedFrom')]">780</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedBy') or contains(bf:Relationship/@rdf:about, 'continuedBy')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedInPartBy') or contains(bf:Relationship/@rdf:about, 'continuedInPartBy')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'splitInto') or contains(bf:Relationship/@rdf:about, 'splitInto')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'mergedToForm') or contains(bf:Relationship/@rdf:about, 'mergedToForm')]">785</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'dataSource') or contains(bf:Relationship/@rdf:about, 'dataSource')]">786</case>
+          <case test="default">787</case>
+        </switch>
+      </var>
+      <var name="vLanguageUri">
+        <switch>
+          <case test="bf:language/@rdf:resource"><transform><xsl:value-of select="bf:language/@rdf:resource"/></transform></case>
+          <case test="bf:language/*/@rdf:about"><transform><xsl:value-of select="bf:language/*/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <var name="vPlaceUri">
+        <switch>
+          <case test="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/@rdf:resource"><transform><xsl:value-of select="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/@rdf:resource"/></transform></case>
+          <case test="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*/@rdf:about"><transform><xsl:value-of select="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <ind1 default="1">
+        <switch>
+          <case test="$vLinkTagFromWork2 = '780' or $vLinkTagFromWork2 = '785'">0</case>
+        </switch>
+      </ind1>
+      <ind2 default=" ">
+        <switch>
+          <case test="$vLinkTagFromWork2 != '780' and $vLinkTagFromWork2 != '785'"><transform><xsl:value-of select="' '" /></transform></case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedinpart') or contains(bf:Relationship/@rdf:about, 'continuedinpart')]">1</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuationof') or contains(bf:Relationship/@rdf:about, 'continuationof')]">0</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continues') or contains(bf:Relationship/@rdf:about, 'continues')]">0</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'precededby') or contains(bf:Relationship/@rdf:about, 'precededby')]">2</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'succeededby') or contains(bf:Relationship/@rdf:about, 'succeededby')]">2</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'mergerof') or contains(bf:Relationship/@rdf:about, 'mergerof')]">4</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'absorbedby') or contains(bf:Relationship/@rdf:about, 'absorbedby')]">4</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'absorptionof') or contains(bf:Relationship/@rdf:about, 'absorptionof')]">5</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'separatedfrom') or contains(bf:Relationship/@rdf:about, 'separatedfrom')]">7</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedby') or contains(bf:Relationship/@rdf:about, 'continuedby')]">0</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedinpartby') or contains(bf:Relationship/@rdf:about, 'continuedinpartby')]">1</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'splitinto') or contains(bf:Relationship/@rdf:about, 'splitinto')]">6</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'mergedtoform') or contains(bf:Relationship/@rdf:about, 'mergedtoform')]">7</case>
+          
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuesInPart') or contains(bf:Relationship/@rdf:about, 'continuesInPart')]">1</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continues') or contains(bf:Relationship/@rdf:about, 'continues')]">0</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'precededBy') or contains(bf:Relationship/@rdf:about, 'precededBy')]">2</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'succeededBy') or contains(bf:Relationship/@rdf:about, 'succeededBy')]">2</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'mergerOf') or contains(bf:Relationship/@rdf:about, 'mergerOf')]">4</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'absorbedBy') or contains(bf:Relationship/@rdf:about, 'absorbedBy')]">4</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'absorbed') or contains(bf:Relationship/@rdf:about, 'absorbed')]">5</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'separatedFrom') or contains(bf:Relationship/@rdf:about, 'separatedFrom')]">7</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedBy') or contains(bf:Relationship/@rdf:about, 'continuedBy')]">0</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'continuedInPartBy') or contains(bf:Relationship/@rdf:about, 'continuedInPartBy')]">1</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'splitInto') or contains(bf:Relationship/@rdf:about, 'splitInto')]">6</case>
+          <case test="ancestor::bf:Relation/bf:relationship[contains(@rdf:resource, 'mergedToForm') or contains(bf:Relationship/@rdf:about, 'mergedToForm')]">7</case>
+        </switch>
+      </ind2>
+      <switch>
+        <case test="ancestor::bf:Relation/bf:note">
+          <var name="vLinkage">
+            <transform>
+              <xsl:value-of select="concat( count(ancestor::bf:relation/preceding::bf:relation) + 10, '\p' )" />
+            </transform>
+          </var>
+          <sf code="8" repeatable="false">
+            <transform><xsl:value-of select="$vLinkage" /></transform>
+          </sf>
+        </case>
+      </switch>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+      </sf>
+      <var name="vRelStrs">
+        <transform>
+          <xsl:value-of select="'
+        http://id.loc.gov/vocabulary/relationship/subseries 
+        http://id.loc.gov/vocabulary/relationship/series 
+        http://id.loc.gov/vocabulary/relationship/translationof 
+        http://id.loc.gov/vocabulary/relationship/translatedas 
+        http://id.loc.gov/vocabulary/relationship/supplementto 
+        http://id.loc.gov/vocabulary/relationship/supplement 
+        http://id.loc.gov/vocabulary/relationship/partof 
+        http://id.loc.gov/vocabulary/relationship/part 
+        http://id.loc.gov/vocabulary/relationship/otheredition 
+        http://id.loc.gov/vocabulary/relationship/otherphysicalformat 
+        http://id.loc.gov/vocabulary/relationship/issuedwith 
+        http://id.loc.gov/vocabulary/relationship/continuedinpart 
+        http://id.loc.gov/vocabulary/relationship/continuationof 
+        http://id.loc.gov/vocabulary/relationship/continues 
+        http://id.loc.gov/vocabulary/relationship/precededby 
+        http://id.loc.gov/vocabulary/relationship/mergerof 
+        http://id.loc.gov/vocabulary/relationship/absorbedby 
+        http://id.loc.gov/vocabulary/relationship/absorptionof 
+        http://id.loc.gov/vocabulary/relationship/separatedby 
+        http://id.loc.gov/vocabulary/relationship/continuedby 
+        http://id.loc.gov/vocabulary/relationship/continuedinpartby 
+        http://id.loc.gov/vocabulary/relationship/succeededby 
+        http://id.loc.gov/vocabulary/relationship/splitinto 
+        http://id.loc.gov/vocabulary/relationship/mergedtoform 
+        http://id.loc.gov/vocabulary/relationship/datasource 
+        http://id.loc.gov/vocabulary/relationship/relatedwork
+        '" />
+        </transform> 
+      </var>
+      <sf code="i" chopPunct="true">
+        <select xpath="ancestor::bf:Relation/bf:relationship[
+                            ( 
+                                @rdf:resource and 
+                                not(contains($vRelStrs, @rdf:resource)) and 
+                                not(contains(@rdf:resource, 'ontologies/bibframe'))
+                            ) or
+                            ( 
+                                bf:Relationship/@rdf:about and 
+                                not(contains($vRelStrs, bf:Relationship/@rdf:about)) and
+                                not(contains(bf:Relationship/@rdf:about, 'ontologies/bibframe'))
+                            )
+                         ]/bf:Relationship[rdfs:label or madsrdf:authoritativeLabel]">
+          <switch>
+            <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+            <case test="default"><select xpath="rdfs:label"/></case>
+          </switch>
+        </select>
+      </sf>
+      <sf code="4">
+        <select xpath="ancestor::bf:Relation/bf:relationship[
+                      ( 
+                        @rdf:resource and 
+                        not(contains($vRelStrs, @rdf:resource)) and 
+                        not(contains(@rdf:resource, 'ontologies/bibframe'))
+                      ) or
+                      ( 
+                        bf:Relationship/@rdf:about and 
+                        not(contains($vRelStrs, bf:Relationship/@rdf:about)) and
+                        not(contains(bf:Relationship/@rdf:about, 'ontologies/bibframe'))
+                      )
+                    ]/bf:Relationship[madsrdf:code or bf:code]">
+          <switch>
+            <case test="madsrdf:code">
+              <select xpath="madsrdf:code"/>
+            </case>
+            <case test="default"><select xpath="bf:code"/></case>
+          </switch>
+        </select>
+      </sf>
+      <sf code="4">
+        <select xpath="ancestor::bf:Relation/bf:relationship[
+                    ( 
+                      @rdf:resource and 
+                      not(contains($vRelStrs, @rdf:resource)) and 
+                     not(contains(@rdf:resource, 'ontologies/bibframe'))
+                    ) or
+                    ( 
+                      bf:Relationship/@rdf:about and 
+                      not(contains($vRelStrs, bf:Relationship/@rdf:about)) and
+                      not(contains(bf:Relationship/@rdf:about, 'ontologies/bibframe'))
+                    )
+                  ]//@rdf:*[1]"/>
+      </sf>
+      <sf code="a" chopPunct="true" repeatable="false">
+        <select xpath="bf:contribution/*[local-name()='PrimaryContribution' or rdf:type[contains(@rdf:resource, '/PrimaryContribution')]]/bf:agent/*/rdfs:label"/>
+      </sf>
+      <switch>
+        <case test="bf:title/bf:Title/bf:mainTitle != bf:hasInstance/bf:Instance/bf:title/bf:Title/bf:mainTitle">
+          <sf code="s" chopPunct="true" repeatable="false"><select xpath="bf:title/bf:Title/bf:mainTitle"/></sf>
+        </case>
+      </switch>
+      <sf code="t" chopPunct="true" repeatable="false">
+        <switch>
+          <case test="bf:hasInstance/bf:Instance/bf:title/bf:Title/bf:mainTitle">
+            <select xpath="bf:hasInstance/bf:Instance/bf:title/bf:Title/bf:mainTitle"/>            
+          </case>
+          <case test="bf:title/bf:Title/bf:mainTitle">
+            <select xpath="bf:title/bf:Title/bf:mainTitle"/>
+          </case>
+        </switch>
+      </sf>
+      <sf code="g" chopPunct="true">
+        <select xpath="bf:hasInstance/bf:Instance/bf:part"/>
+      </sf>
+      <sf code="b" chopPunct="true" repeatable="false">
+        <select xpath="bf:hasInstance/bf:Instance/bf:editionStatement"/>
+      </sf>
+      <sf code="c" chopPunct="true" repeatable="false">
+        <select xpath="bf:title/bf:Title/bf:qualifier"/>
+      </sf>
+      <sf code="d" chopPunct="true" repeatable="false">
+        <select xpath="bf:hasInstance/bf:Instance/bf:publicationStatement|bf:hasInstance/bf:Instance/bflc:publicationStatement|bf:hasInstance/bf:Instance/bf:provisionActivityStatement"/>
+      </sf>
+      <!--
+      <switch>
+        <case test="$vLanguageUri != '' or bf:language/*[local-name()='code']">
+          <sf code="e">
+            <switch>
+              <case test="bf:language/*[local-name()='code']"><transform><xsl:value-of select="bf:language/*[local-name()='code']"/></transform></case>
+              <case test="$vLanguageUri != ''">
+                <switch>
+                  <case test="contains($vLanguageUri,'id.loc.gov')">
+                    <transform>
+                      <xsl:call-template name="tUriCode">
+                        <xsl:with-param name="pUri" select="$vLanguageUri"/>
+                      </xsl:call-template>
+                    </transform>
+                  </case>
+                  <case test="default"><transform><xsl:value-of select="$vLanguageUri"/></transform></case>
+                </switch>
+              </case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      -->
+      <switch>
+        <case test="$vPlaceUri != '' or bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*[local-name()='code']">
+          <sf code="f">
+            <switch>
+              <case test="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*[local-name()='code']"><transform><xsl:value-of select="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*[local-name()='code']"/></transform></case>
+              <case test="$vPlaceUri != ''">
+                <switch>
+                  <case test="contains($vPlaceUri,'id.loc.gov')">
+                    <transform>
+                      <xsl:call-template name="tUriCode">
+                        <xsl:with-param name="pUri" select="$vPlaceUri"/>
+                      </xsl:call-template>
+                    </transform>
+                  </case>
+                  <case test="default"><transform><xsl:value-of select="$vPlaceUri"/></transform></case>
+                </switch>
+              </case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      <!--
+      <sf code="h" chopPunct="true" repeatable="false">
+        <select xpath="bf:hasInstance/bf:Instance/bf:extent/bf:Extent/rdfs:label"/>
+      </sf>
+      -->
+      <sf code="k" chopPunct="true">
+        <select xpath="bf:hasInstance/bf:Instance/bf:seriesStatement"/>
+      </sf>
+      <sf code="n" chopPunct="true">
+        <select xpath="bf:note/bf:Note/rdfs:label|bf:hasInstance/bf:Instance/bf:note/bf:Note/rdfs:label"/>
+      </sf>
+      <sf code="p" chopPunct="true" repeatable="false">
+        <select xpath="bf:title/*[local-name()='AbbreviatedTitle' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/AbbreviatedTitle']/mainTitle"/>
+      </sf>
+      <sf code="x" chopPunct="true" repeatable="false">
+        <select xpath="bf:identifiedBy/*[local-name()='Issn' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Issn']/rdf:value"/>
+      </sf>
+      <select xpath="bf:hasInstance/bf:Instance/bf:identifiedBy/*">
+        <switch>
+          <!--
+          <case test="local-name()='Local' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Local'">
+            <sf code="o"><select xpath="rdf:value"/></sf>
+          </case>
+          -->
+          <case test="local-name()='Upc' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Upc'" />
+          <case test="local-name()='ReportNumber' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/ReportNumber'">
+            <sf code="r"><select xpath="rdf:value"/></sf>
+          </case>
+          <case test="local-name()='Strn' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Strn'">
+            <sf code="u"><select xpath="rdf:value"/></sf>
+          </case>
+          <case test="local-name()='Lccn' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Lccn'">
+            <sf code="w">
+              <transform><xsl:value-of select="concat('(DLC)',rdf:value)"/></transform>
+            </sf>
+          </case>
+          <case test="local-name()='OclcNumber' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/OclcNumber'">
+            <sf code="w">
+              <transform><xsl:value-of select="concat('(OCoLC)',rdf:value)"/></transform>
+            </sf>
+          </case>
+          <case test="local-name()='Coden' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Coden'">
+            <sf code="y"><select xpath="rdf:value"/></sf>
+          </case>
+          <case test="local-name()='Isbn' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Isbn'">
+            <sf code="z"><select xpath="rdf:value"/></sf>
+          </case>
+          <case test="default">
+            <sf code="w">
+              <switch>
+                <case test="bf:assigner/bf:Agent/bf:code">
+                  <transform>
+                    <xsl:variable name="vSource">
+                      <xsl:call-template name="tChopPunct">
+                        <xsl:with-param name="pString" select="bf:assigner/bf:Agent/bf:code"/>
+                      </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/></transform>
+                </case>
+                <case test="default">
+                  <select xpath="rdf:value"/>
+                </case>
+              </switch>
+            </sf>
+          </case>
+        </switch>
+      </select>
+    </context>
+  </df>
+  
+  <!-- Linking Entries before relationship change. -->
+  <df tag="$vLinkTagFromWork" lang-xpath="rdfs:label">
+    <context xpath="bf:Work/bf:hasSeries/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:hasSubseries/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:translationOf/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:translation/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:supplement/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:supplementTo/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:partOf/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:hasPart/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:otherEdition/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:otherPhysicalFormat/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:issuedWith/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:continues/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:continuesInPart/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:precededBy/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:mergerOf/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:absorbed/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:separatedBy/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:continuedBy/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:continuedInPartBy/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:succeededBy/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:absorbedBy/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:splitInto/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:mergedToForm/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:dataSource/bf:Work[bf:hasInstance] |
+                    bf:Work/bf:relatedTo/bf:Work[bf:hasInstance]">
+      <var name="vLinkTagFromWork">
+        <switch>
+          <case test="local-name(..)='hasSeries'">760</case>
+          <case test="local-name(..)='hasSubseries'">762</case>
+          <case test="local-name(..)='translationOf'">765</case>
+          <case test="local-name(..)='translation'">767</case>
+          <case test="local-name(..)='supplement'">770</case>
+          <case test="local-name(..)='supplementTo'">772</case>
+          <case test="local-name(..)='partOf'">773</case>
+          <case test="local-name(..)='hasPart'">774</case>
+          <case test="local-name(..)='otherEdition'">775</case>
+          <case test="local-name(..)='otherPhysicalFormat'">776</case>
+          <case test="local-name(..)='issuedWith'">777</case>
+          <case test="local-name(..)='continues'">780</case>
+          <case test="local-name(..)='continuesInPart'">780</case>
+          <case test="local-name(..)='precededBy'">780</case>
+          <case test="local-name(..)='mergerOf'">780</case>
+          <case test="local-name(..)='absorbed'">780</case>
+          <case test="local-name(..)='separatedFrom'">780</case>
+          <case test="local-name(..)='continuedBy'">785</case>
+          <case test="local-name(..)='continuedInPartBy'">785</case>
+          <case test="local-name(..)='succeededBy'">785</case>
+          <case test="local-name(..)='absorbedBy'">785</case>
+          <case test="local-name(..)='splitInto'">785</case>
+          <case test="local-name(..)='mergedToForm'">785</case>
+          <case test="local-name(..)='dataSource'">786</case>
+          <case test="default">787</case>
+        </switch>
+      </var>
+      <var name="vLanguageUri">
+        <switch>
+          <case test="bf:language/@rdf:resource"><transform><xsl:value-of select="bf:language/@rdf:resource"/></transform></case>
+          <case test="bf:language/*/@rdf:about"><transform><xsl:value-of select="bf:language/*/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <var name="vPlaceUri">
+        <switch>
+          <case test="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/@rdf:resource"><transform><xsl:value-of select="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/@rdf:resource"/></transform></case>
+          <case test="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*/@rdf:about"><transform><xsl:value-of select="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <ind1 default="0"/>
+      <ind2 default=" ">
+        <switch>
+          <case test="local-name(parent::*)='continues'">0</case>
+          <case test="local-name(parent::*)='continuesInPart'">1</case>
+          <case test="local-name(parent::*)='precededBy'">2</case>
+          <case test="local-name(parent::*)='mergerOf'">4</case>
+          <case test="local-name(parent::*)='absorbed'">5</case>
+          <case test="local-name(parent::*)='separatedFrom'">7</case>
+          <case test="local-name(parent::*)='continuedBy'">0</case>
+          <case test="local-name(parent::*)='continuedInPartBy'">1</case>
+          <case test="local-name(parent::*)='succeededBy'">2</case>
+          <case test="local-name(parent::*)='absorbedBy'">4</case>
+          <case test="local-name(parent::*)='splitInto'">5</case>
+          <case test="local-name(parent::*)='mergedToForm'">7</case>
+        </switch>
+      </ind2>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+      </sf>
+      <sf code="a" chopPunct="true" repeatable="false">
+        <select xpath="bf:contribution/*[local-name()='PrimaryContribution' or rdf:type[contains(@rdf:resource, '/PrimaryContribution')]]/bf:agent/*/rdfs:label"/>
+      </sf>
+      <sf code="b" chopPunct="true" repeatable="false">
+        <select xpath="bf:hasInstance/bf:Instance/bf:editionStatement"/>
+      </sf>
+      <sf code="c" chopPunct="true" repeatable="false">
+        <select xpath="bf:title/bf:Title/bf:qualifier"/>
+      </sf>
+      <sf code="d" chopPunct="true" repeatable="false">
+        <select xpath="bf:hasInstance/bf:Instance/bf:provisionActivityStatement"/>
+      </sf>
+      <switch>
+        <case test="$vLanguageUri != '' or bf:language/*[local-name()='code']">
+          <sf code="e">
+            <switch>
+              <case test="bf:language/*[local-name()='code']"><transform><xsl:value-of select="bf:language/*[local-name()='code']"/></transform></case>
+              <case test="$vLanguageUri != ''">
+                <switch>
+                  <case test="contains($vLanguageUri,'id.loc.gov')">
+                    <transform>
+                      <xsl:call-template name="tUriCode">
+                        <xsl:with-param name="pUri" select="$vLanguageUri"/>
+                      </xsl:call-template>
+                    </transform>
+                  </case>
+                  <case test="default"><transform><xsl:value-of select="$vLanguageUri"/></transform></case>
+                </switch>
+              </case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      <switch>
+        <case test="$vPlaceUri != '' or bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*[local-name()='code']">
+          <sf code="f">
+            <switch>
+              <case test="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*[local-name()='code']"><transform><xsl:value-of select="bf:hasInstance/bf:Instance/bf:provisionActivity/bf:ProvisionActivity/bf:place/*[local-name()='code']"/></transform></case>
+              <case test="$vPlaceUri != ''">
+                <switch>
+                  <case test="contains($vPlaceUri,'id.loc.gov')">
+                    <transform>
+                      <xsl:call-template name="tUriCode">
+                        <xsl:with-param name="pUri" select="$vPlaceUri"/>
+                      </xsl:call-template>
+                    </transform>
+                  </case>
+                  <case test="default"><transform><xsl:value-of select="$vPlaceUri"/></transform></case>
+                </switch>
+              </case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      <sf code="i" chopPunct="true">
+        <select xpath="bflc:relationship/bflc:Relationship/bflc:relation/*[rdfs:label or madsrdf:authoritativeLabel]">
+          <switch>
+            <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+            <case test="default"><select xpath="rdfs:label"/></case>
+          </switch>
+        </select>
+      </sf>
+      <sf code="4">
+        <select xpath="bflc:relationship/bflc:Relationship/bflc:relation/*[madsrdf:code or bf:code]">
+          <switch>
+            <case test="madsrdf:code">
+              <select xpath="madsrdf:code"/>
+            </case>
+            <case test="default"><select xpath="bf:code"/></case>
+          </switch>
+        </select>
+      </sf>
+      <sf code="4">
+        <select xpath="bflc:relationship/bflc:Relationship/bflc:relation/*/@rdf:about|bflc:relationship/bflc:Relationship/bflc:relation/@rdf:resource"/>
+      </sf>
+      <switch>
+        <case test="bf:title/bf:Title/bf:mainTitle != bf:hasInstance/bf:Instance/bf:title/bf:Title/bf:mainTitle">
+          <sf code="s" chopPunct="true" repeatable="false"><select xpath="bf:title/bf:Title/bf:mainTitle"/></sf>
+        </case>
+      </switch>
+      <sf code="t" chopPunct="true" repeatable="false">
+        <switch>
+          <case test="bf:hasInstance/bf:Instance/bf:title/bf:Title/bf:mainTitle">
+            <select xpath="bf:hasInstance/bf:Instance/bf:title/bf:Title/bf:mainTitle"/>            
+          </case>
+          <case test="bf:title/bf:Title/bf:mainTitle">
+            <select xpath="bf:title/bf:Title/bf:mainTitle"/>
+          </case>
+        </switch>
+      </sf>
+      <sf code="g" chopPunct="true">
+        <select xpath="bf:hasInstance/bf:Instance/bf:part"/>
+      </sf>
+      <sf code="h" chopPunct="true" repeatable="false">
+        <select xpath="bf:hasInstance/bf:Instance/bf:extent/bf:Extent/rdfs:label"/>
+      </sf>
+      <sf code="k" chopPunct="true">
+        <select xpath="bf:hasInstance/bf:Instance/bf:seriesStatement"/>
+      </sf>
+      <sf code="n" chopPunct="true">
+        <select xpath="bf:note/bf:Note/rdfs:label|bf:hasInstance/bf:Instance/bf:note/bf:Note/rdfs:label"/>
+      </sf>
+      <sf code="p" chopPunct="true" repeatable="false">
+        <select xpath="bf:title/*[local-name()='AbbreviatedTitle' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/AbbreviatedTitle']/mainTitle"/>
+      </sf>
+      <sf code="x" chopPunct="true" repeatable="false">
+        <select xpath="bf:identifiedBy/*[local-name()='Issn' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Issn']/rdf:value"/>
+      </sf>
+      <select xpath="bf:hasInstance/bf:Instance/bf:identifiedBy/*">
+        <switch>
+          <case test="local-name()='Local' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Local'">
+            <sf code="o"><select xpath="rdf:value"/></sf>
+          </case>
+          <case test="local-name()='ReportNumber' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/ReportNumber'">
+            <sf code="r"><select xpath="rdf:value"/></sf>
+          </case>
+          <case test="local-name()='Strn' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Strn'">
+            <sf code="u"><select xpath="rdf:value"/></sf>
+          </case>
+          <case test="local-name()='Lccn' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Lccn'">
+            <sf code="w">
+              <transform><xsl:value-of select="concat('(DLC)',rdf:value)"/></transform>
+            </sf>
+          </case>
+          <case test="local-name()='Coden' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Coden'">
+            <sf code="y"><select xpath="rdf:value"/></sf>
+          </case>
+          <case test="local-name()='Isbn' or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Isbn'">
+            <sf code="z"><select xpath="rdf:value"/></sf>
+          </case>
+          <case test="default">
+            <sf code="w">
+              <switch>
+                <case test="bf:assigner/bf:Agent/bf:code">
+                  <transform>
+                    <xsl:variable name="vSource">
+                      <xsl:call-template name="tChopPunct">
+                        <xsl:with-param name="pString" select="bf:assigner/bf:Agent/bf:code"/>
+                      </xsl:call-template>
+                    </xsl:variable>
+                    <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/></transform>
+                </case>
+                <case test="default">
+                  <select xpath="rdf:value"/>
+                </case>
+              </switch>
+            </sf>
+          </case>
+        </switch>
+      </select>
+    </context>
+  </df>
+
+</rules>

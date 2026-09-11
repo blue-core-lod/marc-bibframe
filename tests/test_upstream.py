@@ -1,8 +1,8 @@
-"""Is the vendored stylesheet still the latest one LC has released?
+"""Are the vendored stylesheets still the latest ones LC has released?
 
-This one test talks to the network, which is usually a thing to keep out of a
-default test run. It is in scope here because the vendored stylesheets are
-what the package is, and the only way it goes red is upstream actually having
+These tests talk to the network, which is usually a thing to keep out of a
+default test run. They are in scope here because the vendored stylesheets are
+what the package is, and the only way they go red is upstream actually having
 released something -- an unreachable API or a spent rate limit skips.
 
 The cost is that an upstream release turns unrelated pull requests red until
@@ -18,12 +18,13 @@ import pytest
 
 from marc_bibframe import upstream
 
-LATEST = "https://api.github.com/repos/lcnetdev/marc2bibframe2/releases/latest"
+STYLESHEETS = ["marc2bibframe2", "bibframe2marc"]
 
 
-def latest_release_tag() -> str:
+def latest_release_tag(repository: str) -> str:
     request = urllib.request.Request(
-        LATEST, headers={"Accept": "application/vnd.github+json"}
+        f"https://api.github.com/repos/{repository}/releases/latest",
+        headers={"Accept": "application/vnd.github+json"},
     )
     # Authenticated when a token is around: the anonymous rate limit is 60 an
     # hour per IP address, which shared CI runners burn through.
@@ -39,18 +40,23 @@ def latest_release_tag() -> str:
         pytest.skip(f"could not reach the GitHub API: {error}")
 
 
-def test_vendored_stylesheet_is_the_latest_release():
-    vendored = upstream()["tag"]
-    latest = latest_release_tag()
+@pytest.mark.network
+@pytest.mark.parametrize("stylesheet", STYLESHEETS)
+def test_vendored_stylesheet_is_the_latest_release(stylesheet):
+    vendored = upstream(stylesheet)
+    repository = vendored["repository"].removeprefix("https://github.com/")
+    latest = latest_release_tag(repository)
 
-    assert vendored == latest, (
-        f"marc2bibframe2 {latest} has been released; {vendored} is vendored here.\n"
+    assert vendored["tag"] == latest, (
+        f"{stylesheet} {latest} has been released; {vendored['tag']} is "
+        f"vendored here.\n"
         f"Re-vendor it with:\n"
         f"\n"
-        f"    ./scripts/vendor.py {latest}\n"
+        f"    ./scripts/vendor.py {stylesheet} {latest}\n"
         f"\n"
-        f"If a patch in patches/ no longer applies, the script stops and says "
-        f"which one. That usually means it was fixed upstream and can be "
-        f"deleted. Check the diff for behaviour changes before releasing:\n"
-        f"https://github.com/lcnetdev/marc2bibframe2/compare/{vendored}...{latest}"
+        f"If a patch in patches/{stylesheet}/ no longer applies, the script "
+        f"stops and says which one. That usually means it was fixed upstream "
+        f"and can be deleted. Check the diff for behaviour changes before "
+        f"releasing:\n"
+        f"https://github.com/{repository}/compare/{vendored['tag']}...{latest}"
     )

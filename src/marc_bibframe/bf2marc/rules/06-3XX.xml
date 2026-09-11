@@ -1,0 +1,1353 @@
+<?xml version='1.0'?>
+<rules xmlns="http://www.loc.gov/bf2marc"
+       xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+       xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+       xmlns:bf="http://id.loc.gov/ontologies/bibframe/"
+       xmlns:bflc="http://id.loc.gov/ontologies/bflc/"
+       xmlns:madsrdf="http://www.loc.gov/mads/rdf/v1#"
+       xmlns:marc="http://www.loc.gov/MARC21/slim"
+       xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+
+  <df tag="300">
+    <context xpath="bf:Instance/bf:extent/bf:Extent">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label[. != 'all']"><select xpath="bflc:appliesTo[1]/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <sf code="a" chopPunct="false"><select xpath="rdfs:label"/></sf>
+      <sf code="b" chopPunct="true" repeatable="false">
+        <switch>
+          <case test="bf:note/bf:Note[translate(bf:noteType,$upper,$lower)='physical details' or rdf:type//@rdf:*[1]='http://id.loc.gov/vocabulary/mnotetype/physical']/rdfs:label">
+            <select xpath="bf:note/bf:Note[translate(bf:noteType,$upper,$lower)='physical details' or rdf:type//@rdf:*[1]='http://id.loc.gov/vocabulary/mnotetype/physical']/rdfs:label"></select>
+          </case>
+          <case test="bf:note/bf:Note/rdfs:label">
+            <select xpath="bf:note/bf:Note/rdfs:label"></select>
+          </case>
+          <case test="../../bf:note/bf:Note[translate(bf:noteType,$upper,$lower)='physical details' or rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/mnotetype/physical']/rdfs:label">
+            <select xpath="../../bf:note/bf:Note[translate(bf:noteType,$upper,$lower)='physical details' or rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/mnotetype/physical']/rdfs:label"/>
+          </case>
+        </switch>
+      </sf>
+      <sf code="c" chopPunct="true"><select xpath="../../bf:dimensions"/></sf>
+      <sf code="e" chopPunct="true" repeatable="false">
+        <select xpath="../../bf:note/bf:Note[translate(bf:noteType,$upper,$lower)='accompanying material' or rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/mnotetype/accmat']/rdfs:label"/>
+      </sf>
+    </context>
+  </df>
+
+  <!-- 306 -->
+  <switch>
+    <case test="bf:Instance[not(rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance'])]/bf:duration[@rdf:datatype='http://www.w3.org/2001/XMLSchema#duration']">
+      <df tag="306">
+        <ind1 default=" "/>
+        <ind2 default=" "/>
+        <sf code="a" chopPunct="true">
+          <switch>
+            <case test="starts-with(., 'PT')">
+              <!-- This will need expansion, but ... -->
+              <transform>
+                <xsl:variable name="vH" select="substring(., 3, 2)" />
+                <xsl:variable name="vM" select="substring(., 6, 2)" />
+                <xsl:variable name="vS" select="substring(., 9, 2)" />
+                <xsl:value-of select="concat($vH, $vM, $vS)" />
+              </transform>
+            </case>
+            <case test="default">
+              <select xpath="bf:Instance[not(rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance'])]/bf:duration[@rdf:datatype='http://www.w3.org/2001/XMLSchema#duration']"/>              
+            </case>
+          </switch>          
+        </sf>
+      </df>
+    </case>
+  </switch>
+
+  <!-- 310/321 -->
+  <df tag="$vFreqTag">
+    <context xpath="bf:Instance[not(rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance'])]/bf:frequency/bf:Frequency[rdfs:label or bf:date]">
+      <var name="vFreqTag">
+        <switch>
+          <case test="bf:status//@rdf:*[1] = 'http://id.loc.gov/vocabulary/mstatus/former'">321</case>
+          <case test="translate(bf:note/bf:Note/rdfs:label,$upper,$lower)='former frequency'">321</case>
+          <case test="default">310</case>
+        </switch>
+      </var>
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="a" chopPunct="true" repeatable="false">
+        <select xpath="rdfs:label"/>
+      </sf>
+      <sf code="b" chopPunct="true" repeatable="false">
+        <select xpath="bf:date"/>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vIdType">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vIdType != ''">
+                <xsl:value-of select="concat('(',$vIdType,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+    </context>
+  </df>
+  
+  <df tag="334" lang-xpath="rdfs:label" repeatable="true">
+    <context xpath="bf:Instance[not(rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance'])]/bf:issuance">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="a" chopPunct="true">
+        <switch>
+          <case test="bf:*/madsrdf:authoritativeLabel"><select xpath="bf:*/madsrdf:authoritativeLabel"/></case>
+          <case test="default"><select xpath="bf:*/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="bf:*/*[local-name()='code']">
+          <sf code="b"><transform><xsl:value-of select="bf:*/*[local-name()='code']"/></transform></sf>
+        </case>
+        <case test="@rdf:resource or bf:*/@rdf:about">
+          <sf code="b">
+            <switch>
+              <case test="contains(@rdf:resource,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="@rdf:resource"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="contains(bf:*/@rdf:about,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="bf:*/@rdf:about"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="bf:*/@rdf:about"/></transform></case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      <sf code="0">
+        <select xpath="@rdf:resource"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:*/@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:*/bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vIdType">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vIdType != ''">
+                <xsl:value-of select="concat('(',$vIdType,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:*/bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="336" lang-xpath="rdfs:label">
+    <context xpath="bf:Work/bf:content/*[local-name()='Content' or
+                                                 rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Content'] or
+                                                 local-name()='Authority' or
+                                                 rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#Authority']]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <sf code="a" chopPunct="true">
+        <switch>
+          <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+          <case test="default"><select xpath="rdfs:label"/></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="*[local-name()='code']">
+          <sf code="b"><transform><xsl:value-of select="*[local-name()='code']"/></transform></sf>
+        </case>
+        <case test="@rdf:about">
+          <sf code="b">
+            <switch>
+              <case test="contains(@rdf:about,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="@rdf:about"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <switch>
+          <case test="contains(@rdf:about,'id.loc.gov/vocabulary/contentType')">rdacontent</case>
+          <case test="default"><select xpath="bf:source/bf:Source/bf:code"/></case>
+        </switch>
+      </sf>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vIdType">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vIdType != ''">
+                <xsl:value-of select="concat('(',$vIdType,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="337" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:media/*[local-name()='Media' or
+                                                   rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Media'] or
+                                                   local-name()='Authority' or
+                                                   rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#Authority']]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <sf code="a" chopPunct="true">
+        <switch>
+          <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+          <case test="default"><select xpath="rdfs:label"/></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="*[local-name()='code']">
+          <sf code="b"><transform><xsl:value-of select="*[local-name()='code']"/></transform></sf>
+        </case>
+        <case test="@rdf:about">
+          <sf code="b">
+            <switch>
+              <case test="contains(@rdf:about,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="@rdf:about"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <switch>
+          <case test="contains(@rdf:about,'id.loc.gov/vocabulary/mediaType')">rdamedia</case>
+          <case test="default"><select xpath="bf:source/bf:Source/bf:code"/></case>
+        </switch>
+      </sf>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="338" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:carrier/*[local-name()='Carrier' or
+                                                     rdf:type[@rdf:resource='http://id.loc.gov/ontologies/bibframe/Carrier'] or
+                                                     local-name()='Authority' or
+                                                     rdf:type[@rdf:resource='http://www.loc.gov/mads/rdf/v1#Authority']]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <sf code="a" chopPunct="true">
+        <switch>
+          <case test="madsrdf:authoritativeLabel"><select xpath="madsrdf:authoritativeLabel"/></case>
+          <case test="default"><select xpath="rdfs:label"/></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="*[local-name()='code']">
+          <sf code="b"><transform><xsl:value-of select="*[local-name()='code']"/></transform></sf>
+        </case>
+        <case test="@rdf:about">
+          <sf code="b">
+            <switch>
+              <case test="contains(@rdf:about,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="@rdf:about"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="@rdf:about"/></transform></case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <switch>
+          <case test="contains(@rdf:about,'id.loc.gov/vocabulary/carriers')">rdacarrier</case>
+          <case test="default"><select xpath="bf:source/bf:Source/bf:code"/></case>
+        </switch>
+      </sf>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="340" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:baseMaterial/bf:BaseMaterial |
+                    bf:Instance/bf:appliedMaterial/bf:AppliedMaterial |
+                    bf:Instance/bf:productionMethod/bf:ProductionMethod |
+                    bf:Instance/bf:mount/bf:Mount |
+                    bf:Instance/bf:reductionRatio/bf:ReductionRatio |
+                    bf:Work/bf:colorContent/bf:ColorContent |
+                    bf:Instance/bf:generation/bf:Generation |
+                    bf:Instance/bf:layout/bf:Layout |
+                    bf:Instance/bf:bookFormat/bf:BookFormat |
+                    bf:Instance/bf:fontSize/bf:FontSize |
+                    bf:Instance/bf:polarity/bf:Polarity |
+                    bf:Instance/bf:binding/bf:Binding |
+                    bf:Work/bf:illustrativeContent/bf:Illustration">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="local-name()='BaseMaterial'">
+          <sf code="a" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='AppliedMaterial'">
+          <sf code="c" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='ProductionMethod'">
+          <sf code="d" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='Mount'">
+          <sf code="e" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='ReductionRatio'">
+          <sf code="q" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='ColorContent'">
+          <sf code="g" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='Generation'">
+          <sf code="j" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='Layout'">
+          <sf code="k" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='Binding'">
+          <sf code="l" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='BookFormat'">
+          <sf code="m" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='FontSize'">
+          <sf code="n" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='Polarity'">
+          <sf code="o" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='Illustration'">
+          <sf code="p" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+      </switch>
+      <switch>
+        <case test="local-name()='ReductionRatio'">
+          <sf code="f" chopPunct="true"><select xpath="rdf:value"/></sf>
+        </case>
+      </switch>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="344" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:soundCharacteristic/bf:RecordingMethod |
+                    bf:Instance/bf:soundCharacteristic/bf:RecordingMedium |
+                    bf:Instance/bf:soundCharacteristic/bf:PlayingSpeed |
+                    bf:Instance/bf:soundCharacteristic/bf:GrooveCharacteristic |
+                    bf:Instance/bf:soundCharacteristic/bf:TrackConfig |
+                    bf:Instance/bf:soundCharacteristic/bf:TapeConfig |
+                    bf:Instance/bf:soundCharacteristic/bf:PlaybackChannels |
+                    bf:Instance/bf:soundCharacteristic/bf:PlaybackCharacteristic |
+                    bf:Instance/bf:soundCharacteristic/bf:CaptureStorage |
+                    bf:Instance/bf:soundCharacteristic/bflc:CaptureStorage |
+                    bf:Work/bf:soundContent/bf:SoundContent">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+            <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="local-name()='RecordingMethod'">
+          <sf code="a" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='RecordingMedium'">
+          <sf code="b" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='PlayingSpeed'">
+          <sf code="c" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='GrooveCharacteristic'">
+          <sf code="d" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='TrackConfig'">
+          <sf code="e" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='TapeConfig'">
+          <sf code="f" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='PlaybackChannels'">
+          <sf code="g" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='PlaybackCharacteristic'">
+          <sf code="h" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='SoundContent'">
+          <sf code="i" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='CaptureStorage'">
+          <sf code="j" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+      </switch>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="345" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:projectionCharacteristic/bf:PresentationFormat |
+                    bf:Instance/bf:projectionCharacteristic/bf:ProjectionSpeed">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="local-name()='PresentationFormat'">
+          <sf code="a" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='ProjectionSpeed'">
+          <sf code="b" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+      </switch>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="345" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:aspectRatio/bf:AspectRatio[rdfs:label|rdf:value]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <sf code="c" chopPunct="true"><select xpath="rdf:value"/></sf>
+      <sf code="d" chopPunct="true"><select xpath="rdfs:label"/></sf>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="346" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:videoCharacteristic/bf:VideoFormat |
+                    bf:Instance/bf:videoCharacteristic/bf:BroadcastStandard">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="local-name()='VideoFormat'">
+          <sf code="a" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='BroadcastStandard'">
+          <sf code="b" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+      </switch>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="347" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:digitalCharacteristic/bf:FileType |
+                    bf:Instance/bf:digitalCharacteristic/bf:EncodingFormat |
+                    bf:Instance/bf:digitalCharacteristic/bf:FileSize |
+                    bf:Instance/bf:digitalCharacteristic/bf:Resolution |
+                    bf:Instance/bf:digitalCharacteristic/bf:RegionalEncoding |
+                    bf:Instance/bf:digitalCharacteristic/bf:EncodedBitrate">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <switch>
+        <case test="local-name()='FileType'">
+          <sf code="a" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='EncodingFormat'">
+          <sf code="b" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='FileSize'">
+          <sf code="c" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='Resolution'">
+          <sf code="d" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='RegionalEncoding'">
+          <sf code="e" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='EncodedBitrate'">
+          <sf code="f" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+      </switch>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="348" lang-xpath="rdfs:label">
+    <context xpath="bf:Work/bf:musicFormat/bf:MusicFormat | bf:Work/bf:notation/bf:MusicNotation |
+                    bf:Instance/bf:musicFormat/bf:MusicFormat | bf:Instance/bf:notation/bf:MusicNotation">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <sf code="a" chopPunct="true"><select xpath="../bf:MusicFormat/rdfs:label"/></sf>
+      <sf code="c" chopPunct="true"><select xpath="../bf:MusicNotation/rdfs:label"/></sf>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="351">
+    <context xpath="bf:Work/bf:collectionArrangement/bf:CollectionArrangement">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+        <switch>
+          <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+              <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+          </case>
+          <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+        </switch>
+      </sf>
+      <sf code="c" chopPunct="true" repeatable="false"><select xpath="bf:hierarchicalLevel"/></sf>
+      <sf code="a" chopPunct="true"><select xpath="bf:collectionOrganization"/></sf>
+      <sf code="b" chopPunct="true"><select xpath="bf:pattern"/></sf>
+    </context>
+  </df>
+
+  <df tag="352" lang-xpath="rdfs:label">
+    <context xpath="bf:Instance/bf:digitalCharacteristic/bf:CartographicDataType |
+                    bf:Instance/bf:digitalCharacteristic/bf:CartographicObjectType">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="local-name()='CartographicDataType'">
+          <sf code="a" chopPunct="true" repeatable="false"><select xpath="rdfs:label"/></sf>
+        </case>
+        <case test="local-name()='CartographicObjectType'">
+          <sf code="b" chopPunct="true"><select xpath="rdfs:label"/></sf>
+          <sf code="c" chopPunct="true"><select xpath="bf:count"/></sf>
+        </case>
+      </switch>
+    </context>
+  </df>
+
+  <df tag="353">
+    <context xpath="bf:Work/bf:supplementaryContent/bf:SupplementaryContent[@rdf:about]">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <!--
+      <sf code="3" chopPunct="true" repeatable="false">
+        <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+      </sf>
+      -->
+      <sf code="a"><select xpath="rdfs:label"/></sf>
+      <sf code="b">
+        <transform>
+          <xsl:call-template name="tUriCode">
+            <xsl:with-param name="pUri" select="@rdf:about"/>
+          </xsl:call-template>
+        </transform>
+      </sf>
+      <sf code="0">
+        <switch>
+          <case test="@rdf:about">
+            <select xpath="@rdf:about"/>
+          </case>
+        </switch>
+      </sf>
+      <!--
+      <sf code="0">
+        <switch>
+          <case test="bf:electronicLocator/@rdf:resource">
+            <select xpath="bf:electronicLocator/@rdf:resource"/>
+          </case>
+          <case test="bf:identifiedBy/bf:Identifier">
+            <select xpath="bf:identifiedBy/bf:Identifier">
+              <transform>
+                <xsl:variable name="vSource">
+                  <xsl:call-template name="tChopPunct">
+                    <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+                  </xsl:call-template>
+                </xsl:variable>
+                <xsl:variable name="vIdValue">
+                  <xsl:choose>
+                    <xsl:when test="rdf:value/@rdf:resource">
+                      <xsl:value-of select="rdf:value/@rdf:resource"/>
+                    </xsl:when>
+                    <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+                  </xsl:choose>
+                </xsl:variable>
+                <xsl:choose>
+                  <xsl:when test="$vSource != ''">
+                    <xsl:value-of select="concat('(',$vSource,')',$vIdValue)"/>
+                  </xsl:when>
+                  <xsl:otherwise><xsl:value-of select="$vIdValue"/></xsl:otherwise>
+                </xsl:choose>
+              </transform>
+            </select>
+          </case>
+        </switch>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false">
+        <select xpath="bf:source/bf:Source/bf:code"/>
+      </sf>
+      -->
+    </context>
+  </df>
+
+  <!-- rules for generating unformatted 362 from note in 5XX -->
+  <df tag="362" lang-xpath=".">
+    <context xpath="bf:Instance/bf:firstIssue">
+      <ind1 default="0"/>
+      <ind2 default=" "/>
+      <sf code="a">
+        <transform>
+          <xsl:variable name="vPosition" select="position()"/>
+          <xsl:variable name="vLastIssue">
+            <xsl:for-each select="../bf:lastIssue">
+              <xsl:if test="position() = $vPosition">
+                <xsl:call-template name="tChopPunct">
+                  <xsl:with-param name="pString" select="."/>
+                </xsl:call-template>
+              </xsl:if>
+            </xsl:for-each>
+          </xsl:variable>
+          <xsl:call-template name="tChopPunct">
+            <xsl:with-param name="pString" select="concat(.,'-',$vLastIssue)"/>
+          </xsl:call-template>
+        </transform>
+      </sf>
+    </context>
+  </df>
+
+  <df tag="370" lang-xpath="rdfs:label">
+    <context xpath="bf:Work/bf:originPlace/bf:Place">
+      <ind1 default=" "/>
+      <ind2 default=" "/>
+      <switch>
+        <case test="madsrdf:authoritiveLabel">
+          <sf code="g" chopPunct="true">
+            <transform><xsl:value-of select="madsrdf:authoritativeLabel"/></transform>
+          </sf>
+        </case>
+        <case test="default">
+          <sf code="g" chopPunct="true"><select xpath="rdfs:label"/></sf>
+        </case>
+      </switch>
+      <sf code="0">
+        <select xpath="@rdf:about"/>
+      </sf>
+      <sf code="0">
+        <select xpath="bf:identifiedBy/bf:Identifier">
+          <transform>
+            <xsl:variable name="vSource">
+              <xsl:call-template name="tChopPunct">
+                <xsl:with-param name="pString" select="bf:source/bf:Source/bf:code"/>
+              </xsl:call-template>
+            </xsl:variable>
+            <xsl:choose>
+              <xsl:when test="$vSource != ''">
+                <xsl:value-of select="concat('(',$vSource,')',rdf:value)"/>
+              </xsl:when>
+              <xsl:otherwise><xsl:value-of select="rdf:value"/></xsl:otherwise>
+            </xsl:choose>
+          </transform>
+        </select>
+      </sf>
+      <sf code="2" chopPunct="true" repeatable="false"><select xpath="bf:source/bf:Source/bf:code"/></sf>
+    </context>
+  </df>
+
+  <df tag="382">
+    <context xpath="bf:Work/bf:ensemble/bf:Ensemble|bf:Work/bf:musicMedium/bf:MusicMedium[bflc:readMarc382]">
+      <ind1 default="0">
+        <switch>
+          <case test="bf:status/@rdf:resource='http://id.loc.gov/vocabulary/mstatus/part' or
+                      bf:status/bf:Status/@rdf:about='http://id.loc.gov/vocabulary/mstatus/part' or
+                      translate(bf:status/bf:Status/rdfs:label,$upper,$lower)='partial'">1</case>
+        </switch>
+      </ind1>
+      <ind2 default="1"/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+      </sf>
+      <var name="v382data">
+          <switch>
+              <case test="starts-with(bflc:readMarc382, '$')">
+                  <transform><xsl:value-of select="concat('382  ', bflc:readMarc382)" /></transform>
+              </case>
+              <case test="default">
+                  <transform><xsl:value-of select="bflc:readMarc382" /></transform>
+              </case>
+          </switch>
+      </var>
+      <switch>
+        <case test="$v382data != ''">
+          <transform>
+            <xsl:call-template name="tReadMarc382">
+              <xsl:with-param name="pString" select="substring($v382data, 6)"/>
+            </xsl:call-template>
+          </transform>
+        </case>
+        <case test="default">
+          <select xpath="bf:mediumComponent/bf:MediumComponent[bf:mediumOfPerformance/*/rdfs:label]">
+            <switch>
+              <case test="bf:mediumComponentQualifier//@rdf:*[1] = 'http://id.loc.gov/vocabulary/medcompqual/solo'">
+                <sf code="b" chopPunct="true"><select xpath="bf:mediumOfPerformance/*/rdfs:label"/></sf>
+              </case>
+              <case test="default">
+                <sf code="a" chopPunct="true"><select xpath="bf:mediumOfPerformance/*/rdfs:label"/></sf>
+              </case>
+            </switch>
+            <sf code="n" chopPunct="true" repeatable="false">
+              <select xpath="bf:count"/>
+            </sf>
+            <select xpath="bf:note/bf:Note[rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/mnotetype/alternative']/rdfs:label">
+              <sf code="p" chopPunct="true" repeatable="false"><select xpath="." /></sf>
+            </select>
+            <select xpath="bf:note/bf:Note[rdf:type/@rdf:resource='http://id.loc.gov/vocabulary/mnotetype/doubling']/rdfs:label">
+              <sf code="d" chopPunct="true" repeatable="false"><select xpath="." /></sf>
+            </select>
+            <sf code="v" chopPunct="true" repeatable="false">
+              <select xpath="bf:note/bf:Note[not(rdf:type)]/rdfs:label"/>
+            </sf>
+          </select>
+          <switch>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/ensemble']">
+              <sf code="t">
+                <transform><xsl:value-of select="'1'" /></transform>
+              </sf>
+            </case>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/soloind']">
+              <sf code="s">
+                <transform><xsl:value-of select="'1'" /></transform>
+              </sf>
+            </case>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/duo']">
+              <sf code="s">
+                <transform><xsl:value-of select="'2'" /></transform>
+              </sf>
+            </case>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/trio']">
+              <sf code="s">
+                <transform><xsl:value-of select="'3'" /></transform>
+              </sf>
+            </case>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/quartet']">
+              <sf code="s">
+                <transform><xsl:value-of select="'4'" /></transform>
+              </sf>
+            </case>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/quintet']">
+              <sf code="s">
+                <transform><xsl:value-of select="'5'" /></transform>
+              </sf>
+            </case>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/sextet']">
+              <sf code="s">
+                <transform><xsl:value-of select="'6'" /></transform>
+              </sf>
+            </case>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/septet']">
+              <sf code="s">
+                <transform><xsl:value-of select="'7'" /></transform>
+              </sf>
+            </case>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/octet']">
+              <sf code="s">
+                <transform><xsl:value-of select="'8'" /></transform>
+              </sf>
+            </case>
+            <case test="bf:ensembleSize//@rdf:*[. = 'http://id.loc.gov/vocabulary/ensemblesize/nonet']">
+              <sf code="s">
+                <transform><xsl:value-of select="'9'" /></transform>
+              </sf>
+            </case>
+          </switch>
+          <switch>
+            <case test="bf:mediumComponent/bf:MediumComponent/bf:mediumOfPerformance//@rdf:*[contains(., 'authorities/performanceMediums')] or 
+                        bf:mediumComponent/bf:MediumComponent/bf:mediumOfPerformance//bf:source//@rdf:*[contains(., 'authorities/performanceMediums')] or 
+                        bf:mediumComponent/bf:MediumComponent/bf:mediumOfPerformance//bf:source//bf:code[. = 'lcmpt']">
+              <sf code="2">
+                <transform><xsl:value-of select="'lcmpt'" /></transform>
+              </sf>
+            </case>
+          </switch>
+        </case>
+      </switch>
+    </context>
+  </df>
+
+  <!-- 383 -->
+  <switch>
+    <case test="bf:Work/bf:musicSerialNumber or
+                bf:Work/bf:musicOpusNumber or
+                bf:Work/bf:musicThematicNumber">
+      <df tag="383">
+        <ind1 default = " "/>
+        <ind2 default = " "/>
+        <select xpath="bf:Work/bf:musicSerialNumber |
+                       bf:Work/bf:musicOpusNumber |
+                       bf:Work/bf:musicThematicNumber">
+          <switch>
+            <case test="local-name() = 'musicSerialNumber'">
+              <sf code="a" chopPunct="true"><select xpath="."/></sf>
+            </case>
+            <case test="local-name() = 'musicOpusNumber'">
+              <sf code="b" chopPunct="true"><select xpath="."/></sf>
+            </case>
+            <case test="local-name() = 'musicThematicNumber'">
+              <sf code="c" chopPunct="true"><select xpath="."/></sf>
+            </case>
+          </switch>
+        </select>
+      </df>
+    </case>
+  </switch>
+
+  <df tag="383" lang-xpath=".">
+    <context xpath="bf:Work/bf:identifiedBy/bf:SerialNumber[rdf:value] |
+                    bf:Work/bf:identifiedBy/bf:OpusNumber[rdf:value] |
+                    bf:Work/bf:identifiedBy/bf:ThematicCatalogNumber[rdf:value] ">
+      <ind1 default = " "/>
+      <ind2 default = " "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+      </sf>
+      <switch>
+        <case test="local-name() = 'SerialNumber'">
+          <sf code="a" chopPunct="true"><select xpath="rdf:value"/></sf>
+        </case>
+        <case test="local-name() = 'OpusNumber'">
+          <sf code="b" chopPunct="true"><select xpath="rdf:value"/></sf>
+          <sf code="e" chopPunct="true"><select xpath="bf:source//bf:code"/></sf>
+        </case>
+        <case test="local-name() = 'ThematicCatalogNumber'">
+          <sf code="c" chopPunct="true"><select xpath="rdf:value"/></sf>
+          <sf code="d" chopPunct="true"><select xpath="bf:source//bf:code"/></sf>
+          <sf code="2" chopPunct="true"><transform><xsl:value-of select="'mlati'" /></transform></sf>
+        </case>
+      </switch>
+    </context>
+  </df>
+
+  <df tag="384" lang-xpath=".">
+    <context xpath="bf:Work/bf:musicKey|bf:Work/bf:keyMode/bf:KeyMode/rdfs:label">
+      <ind1 default = " "/>
+      <ind2 default = " "/>
+      <sf code="3" chopPunct="true"><select xpath="parent::bf:KeyMode/bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></sf>
+      <sf code="a" chopPunct="true"><select xpath="."/></sf>
+    </context>
+  </df>
+
+  <!-- 385 and 521 -->
+  <select xpath="bf:Work/bf:intendedAudience">
+    <var name="vSourceUri">
+      <switch>
+        <case test="*/bf:source/@rdf:resource"><transform><xsl:value-of select="*/bf:source/@rdf:resource"/></transform></case>
+        <case test="*/bf:source/bf:Source/@rdf:about"><transform><xsl:value-of select="*/bf:source/bf:Source/@rdf:about"/></transform></case>
+      </switch>
+    </var>
+    <var name="vSharedDollar2">
+      <switch>
+        <case test="contains(self::node()/@rdf:resource, 'id.loc.gov/authorities/demographicTerms') or 
+                    contains(*/@rdf:about, 'id.loc.gov/authorities/demographicTerms')">
+          <sf code="2">lcdgt</sf>
+        </case>
+        <case test="contains(self::node()/@rdf:resource, 'id.loc.gov/authorities/subjects') or 
+                    contains(*/@rdf:about, 'id.loc.gov/authorities/subjects')">
+          <sf code="2">lcsh</sf>
+        </case>
+        <case test="*/bf:source/bf:Source/*[local-name()='code']">
+          <sf code="2"><transform><xsl:value-of select="*/bf:source/bf:Source/*[local-name()='code'][1]"/></transform></sf>
+        </case>
+        <case test="$vSourceUri != ''">
+          <sf code="2">
+            <switch>
+              <case test="contains($vSourceUri,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="$vSourceUri"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="$vSourceUri"/></transform></case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+    </var>
+    <switch>
+      <case test="@rdf:resource[not(contains(., '/maudience/'))] or 
+                  bf:IntendedAudience[
+                    @rdf:about[not(contains(., '/maudience/'))] or 
+                    bf:source//@rdf:*[. = 'http://id.loc.gov/vocabulary/subjectSchemes/lcdgt'] or 
+                    bf:source//@rdf:*[. = 'http://id.loc.gov/vocabulary/subjectSchemes/lcsh'] or 
+                    bf:source//bf:code[. = 'lcsh']
+                 ]">
+        <df tag="385" lang-xpath="bf:IntendedAudience/rdfs:label">
+          <ind1 default = " "/>
+          <ind2 default = " "/>
+          <sf code="3" chopPunct="true" repeatable="false">
+            <!-- <select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/> -->
+            <switch>
+              <case test="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle">
+                  <select xpath="ancestor::bf:Instance[rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bflc/SecondaryInstance']/bf:title/bf:Title/bf:mainTitle" />
+              </case>
+              <case test="bflc:appliesTo/bflc:AppliesTo/rdfs:label"><select xpath="bflc:appliesTo/bflc:AppliesTo/rdfs:label"/></case>
+            </switch>
+          </sf>
+          <sf code="m" chopPunct="true" repeatable="false">
+            <select xpath="bf:IntendedAudience/bflc:demographicGroup/bflc:DemographicGroup/rdfs:label"/>
+          </sf>
+          <sf code="n" chopPunct="true" repeatable="false">
+            <select xpath="bf:IntendedAudience/bflc:demographicGroup[@rdf:resource or */@rdf:about]">
+              <var name="vDGUri">
+                <switch>
+                  <case test="@rdf:resource"><transform><xsl:value-of select="@rdf:resource"/></transform></case>
+                  <case test="*/@rdf:about"><transform><xsl:value-of select="*/@rdf:about"/></transform></case>
+                </switch>
+              </var>
+              <switch>
+                <case test="contains($vDGUri,'id.loc.gov')">
+                  <transform>
+                    <xsl:call-template name="tUriCode">
+                      <xsl:with-param name="pUri" select="$vDGUri"/>
+                    </xsl:call-template>
+                  </transform>
+                </case>
+                <case test="default"><transform><xsl:value-of select="."/></transform></case>
+              </switch>
+            </select>
+          </sf>
+          <sf code="a" chopPunct="true">
+            <select xpath="bf:IntendedAudience/rdfs:label"/>
+          </sf>
+          <transform>
+            <xsl:copy-of select="$vSharedDollar2" />
+          </transform>
+          <sf code="0">
+            <select xpath="@rdf:resource|bf:IntendedAudience/@rdf:about"/>
+          </sf>
+        </df>
+      </case>
+      <case test="bf:IntendedAudience[not(@rdf:about)]/rdfs:label">
+        <df tag="521">
+          <ind1 default = " ">
+            <switch>
+              <case test="bf:IntendedAudience/bf:note/bf:Note/rdfs:label = 'reading grade level'">0</case>
+              <case test="bf:IntendedAudience/bf:note/bf:Note/rdfs:label = 'interest age level'">1</case>
+              <case test="bf:IntendedAudience/bf:note/bf:Note/rdfs:label = 'interest grade level'">2</case>
+            </switch>
+          </ind1>
+          <ind2 default = " "/>
+          <sf code="3" chopPunct="true" repeatable="false">
+            <select xpath="bf:IntendedAudience/bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+          </sf>
+          <sf code="a" chopPunct="true">
+            <select xpath="bf:IntendedAudience/rdfs:label"/>
+          </sf>
+          <sf code="b">
+            <select xpath="bf:IntendedAudience/bf:source/bf:Source/rdfs:label" />
+          </sf>
+          <transform>
+            <xsl:copy-of select="$vSharedDollar2" />
+          </transform>
+        </df>
+      </case>
+      <case test="bflc:DemographicGroup[not(@rdf:about)]/rdfs:label">
+        <df tag="385">
+          <ind1 default = " " />
+          <ind2 default = " "/>
+          <sf code="3" chopPunct="true" repeatable="false">
+            <select xpath="bflc:DemographicGroup/bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+          </sf>
+          <sf code="m" chopPunct="true">
+            <select xpath="bflc:DemographicGroup/rdfs:label"/>
+          </sf>
+          <transform>
+            <xsl:copy-of select="$vSharedDollar2" />
+          </transform>
+        </df>
+      </case>
+    </switch>
+  </select>
+
+  <df tag="386" lang-xpath="bflc:CreatorCharacteristic/rdfs:label">
+    <context xpath="bf:Work/bflc:creatorCharacteristic">
+      <var name="vSourceUri">
+        <switch>
+          <case test="*/bf:source/@rdf:resource"><transform><xsl:value-of select="*/bf:source/@rdf:resource"/></transform></case>
+          <case test="*/bf:source/bf:Source/@rdf:about"><transform><xsl:value-of select="*/bf:source/bf:Source/@rdf:about"/></transform></case>
+        </switch>
+      </var>
+      <ind1 default = " "/>
+      <ind2 default = " "/>
+      <sf code="3" chopPunct="true" repeatable="false">
+        <select xpath="bflc:CreatorCharacteristic/bflc:appliesTo/bflc:AppliesTo/rdfs:label"/>
+      </sf>
+      <sf code="m" chopPunct="true" repeatable="false">
+        <select xpath="bflc:CreatorCharacteristic/bflc:demographicGroup/bflc:DemographicGroup/rdfs:label"/>
+      </sf>
+      <sf code="n" chopPunct="true" repeatable="false">
+        <select xpath="bflc:CreatorCharacteristic/bflc:demographicGroup[@rdf:resource or */@rdf:about]">
+          <var name="vDGUri">
+            <switch>
+              <case test="@rdf:resource"><transform><xsl:value-of select="@rdf:resource"/></transform></case>
+              <case test="*/@rdf:about"><transform><xsl:value-of select="*/@rdf:about"/></transform></case>
+            </switch>
+          </var>
+          <switch>
+            <case test="contains($vDGUri,'id.loc.gov')">
+              <transform>
+                <xsl:call-template name="tUriCode">
+                  <xsl:with-param name="pUri" select="$vDGUri"/>
+                </xsl:call-template>
+              </transform>
+            </case>
+            <case test="default"><transform><xsl:value-of select="."/></transform></case>
+          </switch>
+        </select>
+      </sf>
+      <sf code="a" chopPunct="true">
+        <select xpath="bflc:CreatorCharacteristic/rdfs:label"/>
+      </sf>
+      <switch>
+        <case test="*/bf:source/bf:Source/*[local-name()='code']">
+          <sf code="2"><transform><xsl:value-of select="*/bf:source/bf:Source/*[local-name()='code'][1]"/></transform></sf>
+        </case>
+        <case test="$vSourceUri != ''">
+          <sf code="2">
+            <switch>
+              <case test="contains($vSourceUri,'id.loc.gov')">
+                <transform>
+                  <xsl:call-template name="tUriCode">
+                    <xsl:with-param name="pUri" select="$vSourceUri"/>
+                  </xsl:call-template>
+                </transform>
+              </case>
+              <case test="default"><transform><xsl:value-of select="$vSourceUri"/></transform></case>
+            </switch>
+          </sf>
+        </case>
+      </switch>
+      <sf code="0">
+        <select xpath="@rdf:resource|bflc:CreatorCharacteristic/@rdf:about"/>
+      </sf>
+    </context>
+  </df>
+
+</rules>
