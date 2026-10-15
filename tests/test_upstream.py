@@ -17,8 +17,7 @@ import urllib.request
 import pytest
 
 from marc_bibframe import upstream
-
-STYLESHEETS = ["marc2bibframe2", "bibframe2marc"]
+from marc_bibframe._xslt import STYLESHEETS
 
 
 def latest_release_tag(repository: str) -> str:
@@ -41,7 +40,7 @@ def latest_release_tag(repository: str) -> str:
 
 
 @pytest.mark.network
-@pytest.mark.parametrize("stylesheet", STYLESHEETS)
+@pytest.mark.parametrize("stylesheet", sorted(STYLESHEETS))
 def test_vendored_stylesheet_is_the_latest_release(stylesheet):
     vendored = upstream(stylesheet)
     repository = vendored["repository"].removeprefix("https://github.com/")

@@ -39,11 +39,4 @@ jobs:
         run: uv run pytest
 
       - name: Vendored stylesheets match upstream plus patches
-        run: |
-          for pair in "marc2bibframe2:xsl" "bibframe2marc:bf2marc"; do
-            stylesheet="${pair%%:*}"
-            directory="src/marc_bibframe/${pair##*:}"
-            tag="$(grep '^tag:' "$directory/UPSTREAM" | cut -d' ' -f2)"
-            uv run ./scripts/vendor.py "$stylesheet" "$tag"
-            git diff --exit-code -- "$directory"
-          done
+        run: uv run ./scripts/vendor.py --check
