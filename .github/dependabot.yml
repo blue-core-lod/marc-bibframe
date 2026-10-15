@@ -1,0 +1,55 @@
+# Dependabot replaces .github/workflows/dependency-updates.yml, which opened one
+# PR a week that ran `uv lock --upgrade` and bumped the patch version in
+# pyproject.toml in the same commit. That tied two different decisions together:
+# keeping the lock current, and deciding when to cut a release. Dependabot keeps
+# the lock current on its own schedule and leaves the version alone -- bump it
+# by hand when you release, which is also when the tag is made.
+#
+# Version updates need no repository setting: committing this file on the
+# default branch is what turns them on. Security updates are separate and still
+# need Dependabot alerts enabled under Settings -> Advanced security.
+
+version: 2
+updates:
+  # Python dependencies, read from pyproject.toml and uv.lock. uv is its own
+  # ecosystem here; the pip entry would not understand the lockfile.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    # `uv lock --upgrade` updated the lock without touching the requirements in
+    # pyproject.toml, and that is still what we want. The lower bounds there are
+    # deliberate -- "lxml>=6.0.2" says what we actually need, not what we last
+    # resolved -- so let Dependabot move the lock and leave the bounds alone.
+    versioning-strategy: "lockfile-only"
+    # Routine bumps arrive as one PR rather than one per package. Majors are
+    # left out of the group so they get a PR of their own, since those are the
+    # ones worth reading before merging.
+    groups:
+      python-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+
+  # The actions pinned in .github/workflows. These were only ever updated by
+  # hand before.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    groups:
+      actions-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    labels: ["dependencies"]
+    commit-message:
+      prefix: "deps"
