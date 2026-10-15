@@ -8,23 +8,32 @@ from marc_bibframe import (
     DEFAULT_BASE_URI,
     marc_to_marcxml,
     marcxml_to_graph,
+    marcxml_to_jsonld,
     marcxml_to_rdfxml,
     upstream,
 )
 from marc_bibframe._cli import read_input, write_output
 
-# rdflib's name for each, except rdfxml, which we serve from the transform
-# directly rather than round-tripping it through a parse.
+#: rdflib's name for each output, except where the output does not come from
+#: rdflib at all. json-ld is a bibframe-json bounded document and rdfxml is
+#: served from the transform directly rather than round-tripped through a
+#: parse; json-ld-expanded is rdflib's own flat array of expanded nodes, kept
+#: for anyone who wants the RDF dump rather than the readable shape.
 FORMATS = {
     "turtle": "turtle",
     "ttl": "turtle",
-    "json-ld": "json-ld",
-    "jsonld": "json-ld",
+    "json-ld": "bibframe-json",
+    "jsonld": "bibframe-json",
+    "json-ld-expanded": "json-ld",
     "ntriples": "nt",
     "nt": "nt",
     "xml": "xml",
-    "rdfxml": None,
+    "rdfxml": "rdfxml",
 }
+
+#: The values in :data:`FORMATS` that are not rdflib format strings.
+BIBFRAME_JSON = "bibframe-json"
+RDFXML = "rdfxml"
 
 
 def looks_like_marcxml(data: bytes) -> bool:
@@ -54,7 +63,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--format",
         default="turtle",
         choices=sorted(FORMATS),
-        help="output serialization (default: turtle). rdfxml is the "
+        help="output serialization (default: turtle). json-ld is the "
+        "bibframe-json shape, one Instance per record and the Work embedded; "
+        "json-ld-expanded is rdflib's flat array of nodes; rdfxml is the "
         "stylesheet's own output, passed through unparsed",
     )
     parser.add_argument(
@@ -120,12 +131,14 @@ def main(argv: list[str] | None = None) -> int:
         "generation_datestamp": args.datestamp,
     }
 
-    rdflib_format = FORMATS[args.format]
-    if rdflib_format is None:
+    target = FORMATS[args.format]
+    if target == RDFXML:
         out = marcxml_to_rdfxml(marcxml, **params)
+    elif target == BIBFRAME_JSON:
+        out = marcxml_to_jsonld(marcxml, **params)
     else:
         out = marcxml_to_graph(marcxml, **params).serialize(
-            format=rdflib_format, encoding="utf-8"
+            format=target, encoding="utf-8"
         )
 
     write_output(out, args.output)

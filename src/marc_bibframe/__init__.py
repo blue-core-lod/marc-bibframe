@@ -19,6 +19,7 @@ import pymarc
 from pymarc.marcxml import record_to_xml
 from rdflib import Graph
 
+from marc_bibframe._jsonld import bounded_document, dumps
 from marc_bibframe._xslt import (
     COLLECTION_CLOSE,
     COLLECTION_OPEN,
@@ -44,8 +45,10 @@ __all__ = [
     "bibframe_to_marcxml",
     "clear_authority_cache",
     "marc_to_graph",
+    "marc_to_jsonld",
     "marc_to_marcxml",
     "marcxml_to_graph",
+    "marcxml_to_jsonld",
     "marcxml_to_rdfxml",
     "upstream",
 ]
@@ -144,3 +147,31 @@ def marc_to_graph(marc: bytes | BinaryIO, **kwargs: Any) -> Graph:
     Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
     """
     return marcxml_to_graph(marc_to_marcxml(marc), **kwargs)
+
+
+def marcxml_to_jsonld(marcxml: str | bytes, **kwargs: Any) -> bytes:
+    """Transform MARCXML into BIBFRAME as a bibframe-json document.
+
+    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+
+    These bytes are the *bounded description* that
+    https://bibframe-json.org defines: the document is the ``bf:Instance``, the
+    Work it instantiates is embedded where ``instanceOf`` reaches it, every
+    property is an array so a reader can loop without checking, and the context
+    is named rather than inlined. A MARCXML ``<collection>`` holds several
+    records, so the result is then a ``@graph`` of Instance documents, in
+    Instance order.
+
+    This is what the command line writes for ``--format json-ld``. For
+    rdflib's own flat array of expanded nodes, serialize the graph yourself:
+    ``marcxml_to_graph(...).serialize(format="json-ld")``.
+    """
+    return dumps(bounded_document(marcxml_to_graph(marcxml, **kwargs)))
+
+
+def marc_to_jsonld(marc: bytes | BinaryIO, **kwargs: Any) -> bytes:
+    """Convert binary MARC21 straight to a bibframe-json document.
+
+    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+    """
+    return marcxml_to_jsonld(marc_to_marcxml(marc), **kwargs)

@@ -36,23 +36,28 @@ def verne_bibframe() -> bytes:
 
 
 @pytest.fixture
-def two_record_bibframe(verne_marcxml) -> bytes:
+def two_record_marcxml(verne_marcxml) -> str:
+    """The verne record twice, with distinct 001s, in one MARCXML collection."""
+    match = re.search(r"<record.*?</record>", verne_marcxml, re.DOTALL)
+    assert match is not None
+    record = match.group(0)
+    return (
+        '<collection xmlns="http://www.loc.gov/MARC21/slim">'
+        + record
+        + record.replace("99123456", "99654321")
+        + "</collection>"
+    )
+
+
+@pytest.fixture
+def two_record_bibframe(two_record_marcxml) -> bytes:
     """Two BIBFRAME descriptions in one RDF/XML document.
 
     marc2bibframe2 emits a Work and an Instance for every record it is given,
     so anything converted from a multi-record file has to be taken apart again
     on the way back.
     """
-    match = re.search(r"<record.*?</record>", verne_marcxml, re.DOTALL)
-    assert match is not None
-    record = match.group(0)
-    collection = (
-        '<collection xmlns="http://www.loc.gov/MARC21/slim">'
-        + record
-        + record.replace("99123456", "99654321")
-        + "</collection>"
-    )
-    return marcxml_to_rdfxml(collection)
+    return marcxml_to_rdfxml(two_record_marcxml)
 
 
 @pytest.fixture

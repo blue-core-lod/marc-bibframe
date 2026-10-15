@@ -22,7 +22,9 @@ classifiers = [
     "Topic :: Text Processing :: Markup :: XML",
 ]
 dependencies = [
+    "bibframe-json>=0.1.0",
     "lxml>=6.0.2",
+    "pyld>=3.3.0",
     "pymarc>=5.2.0",
     "rdflib>=7.1.3",
 ]

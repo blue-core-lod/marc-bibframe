@@ -32,7 +32,7 @@ import pymarc
 import rdflib
 from rdflib import Graph
 
-from marc_bibframe import _striping
+from marc_bibframe import _jsonld, _striping
 from marc_bibframe._xslt import (
     COLLECTION_CLOSE,
     COLLECTION_OPEN,
@@ -59,6 +59,7 @@ FORMATS = {
     "ttl": "turtle",
     "json-ld": "json-ld",
     "jsonld": "json-ld",
+    "json-ld-expanded": "json-ld",
     "ntriples": "nt",
     "nt": "nt",
     "xml": "xml",
@@ -314,11 +315,11 @@ def _exact_literals():
         rdflib.NORMALIZE_LITERALS = previous
 
 
-def _graph(data: bytes, rdflib_format: str) -> Graph:
+def _graph(data: bytes, rdflib_format: str, **kwargs: Any) -> Graph:
     graph = Graph()
     try:
         with _exact_literals():
-            graph.parse(data=data, format=rdflib_format)
+            graph.parse(data=data, format=rdflib_format, **kwargs)
     except Exception as error:
         # rdflib's parsers raise all sorts, and none of it says much.
         raise ValueError(
@@ -372,6 +373,14 @@ def _input_descriptions(
             # not striped. Rebuild it rather than refuse it.
             return _striping.descriptions(_graph(data, "xml"))
         raise ValueError(_NOT_STRIPED)
+
+    if rdflib_format == "json-ld":
+        # A bibframe-json document names its context by URL, and rdflib would
+        # fetch it. Hand over the copy bibframe-json ships instead, so reading
+        # a document we wrote costs no network. Anything naming another
+        # context comes back untouched and resolves as it always did.
+        data, context = _jsonld.local_context(data)
+        return _striping.descriptions(_graph(data, rdflib_format, context=context))
 
     return _striping.descriptions(_graph(data, rdflib_format))
 

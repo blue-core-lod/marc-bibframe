@@ -9,7 +9,8 @@ Convert between MARC and BIBFRAME RDF in Python, using the Library of Congress
 
 Both stylesheets are vendored in this package, so there is nothing to install
 alongside them and no Java, Saxon or xsltproc involved, just `lxml`, `pymarc`
-and `rdflib`.
+and `rdflib` — plus `pyld` and `bibframe-json` for the JSON-LD shape described
+below.
 
 ## Install
 
@@ -33,8 +34,14 @@ Binary MARC21 and MARCXML are both accepted and told apart by their content,
 so there is no flag for it. With no filename it reads standard input.
 
 `--format` takes `turtle` (the default), `json-ld`, `ntriples`, `xml`, or
-`rdfxml`. The last is the stylesheet's own output passed through without a
-parse into rdflib, which is faster and keeps the transform's exact shape.
+`rdfxml`. `json-ld` writes a [bibframe-json](https://bibframe-json.org) bounded
+description rather than rdflib's own JSON: the document is the `bf:Instance`,
+the Work it instantiates is embedded where `instanceOf` reaches it, and every
+property is an array so a reader can loop without checking. A collection
+becomes a `@graph` of Instances, in Instance order. `json-ld-expanded` is
+rdflib's flat array of nodes, for anyone who wants the RDF dump. `rdfxml` is
+the stylesheet's own output passed through without a parse into rdflib, which
+is faster and keeps the transform's exact shape.
 
 `marc-bibframe --help` lists the stylesheet parameters, which are also
 available as flags.
@@ -53,17 +60,25 @@ print(graph.serialize(format="turtle"))
 ```
 
 MARCXML is accepted directly, and RDF/XML is available if you would rather not
-pay for a parse into an rdflib.Graph:
+pay for a parse into an rdflib.Graph. JSON-LD comes in the same bibframe-json
+shape the command line writes:
 
 ```python
-from marc_bibframe import marc_to_marcxml, marcxml_to_graph, marcxml_to_rdfxml
+from marc_bibframe import (
+    marc_to_jsonld,
+    marc_to_marcxml,
+    marcxml_to_graph,
+    marcxml_to_jsonld,
+    marcxml_to_rdfxml,
+)
 
 marcxml = marc_to_marcxml(open("record.mrc", "rb").read())
 graph = marcxml_to_graph(marcxml)
 rdfxml = marcxml_to_rdfxml(marcxml)
+jsonld = marcxml_to_jsonld(marcxml)
 ```
 
-All four functions accept the stylesheet's parameters as keyword arguments —
+All of these accept the stylesheet's parameters as keyword arguments —
 `baseuri`, `idfield`, `idsource`, `localfields`, `bcp47_inference` and
 `generation_datestamp`. See the docstring on `marcxml_to_rdfxml` for what each
 one does.
@@ -106,9 +121,11 @@ is always a MARCXML `<collection>`, even of one record. With no filename it
 reads standard input.
 
 `-i/--input-format` takes the same names `marc-bibframe --format` writes —
-`turtle`, `json-ld`, `ntriples`, `xml`, `rdfxml` — so whatever comes out of one
-command goes into the other. It defaults to `auto`, which works out the
-serialization from the content, so you rarely need it.
+`turtle`, `json-ld`, `json-ld-expanded`, `ntriples`, `xml`, `rdfxml` — so
+whatever comes out of one command goes into the other. It defaults to `auto`,
+which works out the serialization from the content, so you rarely need it. A
+bibframe-json document names its context by URL, and this reads the copy
+`bibframe-json` ships rather than fetching it.
 
 ## Use as a library
 

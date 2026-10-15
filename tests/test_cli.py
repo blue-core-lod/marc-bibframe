@@ -47,13 +47,35 @@ def test_reads_stdin_by_default(capsys, monkeypatch):
         ("ttl", "@prefix bf:"),
         ("nt", "<http://example.org/99123456#Work>"),
         ("ntriples", "<http://example.org/99123456#Work>"),
-        ("json-ld", '"@id"'),
+        ("json-ld", '"@context"'),
+        ("jsonld", '"@context"'),
+        ("json-ld-expanded", '"@id"'),
         ("xml", "<rdf:RDF"),
         ("rdfxml", "<rdf:RDF"),
     ],
 )
 def test_output_formats(capsys, fmt, marker):
     assert marker in run(capsys, VERNE_XML, "-f", fmt)
+
+
+def test_json_ld_is_the_bibframe_json_shape(capsys):
+    """The default JSON-LD is a bounded description, not rdflib's RDF dump.
+
+    test_jsonld.py holds it to the schema; here it is only that the command
+    line reaches for it at all, and that the expanded form is still on offer.
+    """
+    import json
+
+    from bibframe_json import CONTEXT_URL
+
+    doc = json.loads(
+        run(capsys, VERNE_XML, "--datestamp", "2026-09-01T00:00:00", "-f", "json-ld")
+    )
+    assert doc["@context"] == CONTEXT_URL
+    assert doc["@type"] == ["Instance"]
+
+    expanded = run(capsys, VERNE_XML, "-f", "json-ld-expanded")
+    assert '"http://example.org/99123456#Work"' in expanded
 
 
 def test_rdfxml_is_the_stylesheet_output_not_a_reserialization(capsys):
