@@ -17,7 +17,8 @@ from typing import Any, BinaryIO
 import lxml.etree as ET
 import pymarc
 from pymarc.marcxml import record_to_xml
-from rdflib import Graph
+from rdflib import BNode, Graph, URIRef
+from rdflib.term import Node
 
 from marc_bibframe._jsonld import bounded_document, dumps
 from marc_bibframe._xslt import (
@@ -53,10 +54,11 @@ __all__ = [
     "upstream",
 ]
 
-#: The stylesheet's own default. It is deliberately non-resolvable: URIs the
-#: transform mints for entities that MARC does not identify (agents, topics,
-#: the work and instance themselves) are built from it, and they name nothing.
-DEFAULT_BASE_URI = "http://example.org/"
+#: URIs the transform mints for entities that MARC does not identify (agents,
+#: topics, the work and instance themselves) are built from this, and they name
+#: nothing. So it is a URN, which cannot be mistaken for a URI that resolves the
+#: way the stylesheet's own ``http://example.org/`` can.
+DEFAULT_BASE_URI = "urn:x-marc-bibframe:"
 
 
 @functools.cache
@@ -131,20 +133,67 @@ def marcxml_to_rdfxml(
     )
 
 
-def marcxml_to_graph(marcxml: str | bytes, **kwargs: Any) -> Graph:
+def marcxml_to_graph(
+    marcxml: str | bytes, *, blank_nodes: bool = False, **kwargs: Any
+) -> Graph:
     """Transform MARCXML into BIBFRAME as an rdflib Graph.
 
-    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+    Takes the keyword arguments of :func:`marcxml_to_rdfxml`, and one more:
+
+    blank_nodes
+        Describe every resource MARC does not identify -- the Work and
+        Instance, Hubs, Items, and headings with no URI in their $0 -- as a
+        blank node rather than by the URI minted for it, which names nothing.
+        For a store that mints its own URIs, as Blue Core does for a blank
+        Work or Instance. The URIs are found by the default ``baseuri``, so
+        passing any other raises ValueError.
+
+        Serialize such a graph as N-Triples or RDF/XML: before rdflib 8, its
+        JSON-LD writer drops a blank Work and Instance
+        (https://github.com/RDFLib/rdflib/pull/3679), and its Turtle writer
+        can write a list cell twice
+        (https://github.com/RDFLib/rdflib/issues/3736). Nor can it go back to
+        MARC, since bibframe2marc links the Work and Instance by URI.
     """
+    baseuri = kwargs.get("baseuri", DEFAULT_BASE_URI)
+    if blank_nodes and baseuri != DEFAULT_BASE_URI:
+        raise ValueError(
+            f"baseuri={baseuri!r} cannot be used with blank_nodes, which finds "
+            f"the minted URIs by the default base, {DEFAULT_BASE_URI}"
+        )
     graph = Graph()
     graph.parse(data=marcxml_to_rdfxml(marcxml, **kwargs), format="xml")
+    if blank_nodes:
+        _blank_minted_uris(graph)
     return graph
+
+
+def _blank_minted_uris(graph: Graph) -> None:
+    """Replace each URI under DEFAULT_BASE_URI with a blank node, in place.
+
+    Every triple the URI took part in, as subject or object, is kept on the
+    blank node that replaces it, and a URI cited more than once becomes one
+    blank node cited the same number of times.
+    """
+    blanks: dict[Node, BNode] = {}
+
+    def swap(node: Node) -> Node:
+        if isinstance(node, URIRef) and node.startswith(DEFAULT_BASE_URI):
+            return blanks.setdefault(node, BNode())
+        return node
+
+    for triple in list(graph):
+        subject, predicate, obj = triple
+        rewritten = (swap(subject), predicate, swap(obj))
+        if rewritten != triple:
+            graph.remove(triple)
+            graph.add(rewritten)
 
 
 def marc_to_graph(marc: bytes | BinaryIO, **kwargs: Any) -> Graph:
     """Convert binary MARC21 straight to BIBFRAME as an rdflib Graph.
 
-    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+    Takes the same keyword arguments as :func:`marcxml_to_graph`.
     """
     return marcxml_to_graph(marc_to_marcxml(marc), **kwargs)
 
@@ -152,7 +201,7 @@ def marc_to_graph(marc: bytes | BinaryIO, **kwargs: Any) -> Graph:
 def marcxml_to_jsonld(marcxml: str | bytes, **kwargs: Any) -> bytes:
     """Transform MARCXML into BIBFRAME as a bibframe-json document.
 
-    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+    Takes the same keyword arguments as :func:`marcxml_to_graph`.
 
     These bytes are the *bounded description* that
     https://bibframe-json.org defines: the document is the ``bf:Instance``, the
@@ -165,13 +214,25 @@ def marcxml_to_jsonld(marcxml: str | bytes, **kwargs: Any) -> bytes:
     This is what the command line writes for ``--format json-ld``. For
     rdflib's own flat array of expanded nodes, serialize the graph yourself:
     ``marcxml_to_graph(...).serialize(format="json-ld")``.
+
+    Raises ValueError for ``blank_nodes=True``: a bounded description needs an
+    ``@id`` on the Instance and the Work. Serialize
+    ``marcxml_to_graph(..., blank_nodes=True)`` as N-Triples or RDF/XML
+    instead.
     """
+    if kwargs.get("blank_nodes"):
+        raise ValueError(
+            "blank_nodes cannot make a bounded description, which needs an @id "
+            "on the Instance and the Work; serialize "
+            "marcxml_to_graph(..., blank_nodes=True) as N-Triples or RDF/XML "
+            "instead"
+        )
     return dumps(bounded_document(marcxml_to_graph(marcxml, **kwargs)))
 
 
 def marc_to_jsonld(marc: bytes | BinaryIO, **kwargs: Any) -> bytes:
     """Convert binary MARC21 straight to a bibframe-json document.
 
-    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+    Takes the same keyword arguments as :func:`marcxml_to_graph`.
     """
     return marcxml_to_jsonld(marc_to_marcxml(marc), **kwargs)

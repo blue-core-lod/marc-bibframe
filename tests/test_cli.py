@@ -45,8 +45,8 @@ def test_reads_stdin_by_default(capsys, monkeypatch):
     [
         ("turtle", "@prefix bf:"),
         ("ttl", "@prefix bf:"),
-        ("nt", "<http://example.org/99123456#Work>"),
-        ("ntriples", "<http://example.org/99123456#Work>"),
+        ("nt", "<urn:x-marc-bibframe:99123456#Work>"),
+        ("ntriples", "<urn:x-marc-bibframe:99123456#Work>"),
         ("json-ld", '"@context"'),
         ("jsonld", '"@context"'),
         ("json-ld-expanded", '"@id"'),
@@ -75,7 +75,7 @@ def test_json_ld_is_the_bibframe_json_shape(capsys):
     assert doc["@type"] == ["Instance"]
 
     expanded = run(capsys, VERNE_XML, "-f", "json-ld-expanded")
-    assert '"http://example.org/99123456#Work"' in expanded
+    assert '"urn:x-marc-bibframe:99123456#Work"' in expanded
 
 
 def test_rdfxml_is_the_stylesheet_output_not_a_reserialization(capsys):
@@ -90,6 +90,28 @@ def test_baseuri(capsys):
     assert "https://example.edu/c/99123456#Work" in run(
         capsys, VERNE_XML, "-b", "https://example.edu/c/", "-f", "nt"
     )
+
+
+def test_blank_nodes(capsys):
+    out = run(capsys, VERNE_XML, "--blank-nodes", "-f", "nt")
+    assert "_:" in out
+    assert "urn:x-marc-bibframe:" not in out
+
+
+def test_blank_nodes_as_expanded_json_ld(capsys):
+    """Only the bounded json-ld is refused: the flat array is fine."""
+    out = run(capsys, VERNE_XML, "--blank-nodes", "-f", "json-ld-expanded")
+    assert '"http://id.loc.gov/ontologies/bibframe/Instance"' in out
+    assert "urn:x-marc-bibframe:" not in out
+
+
+@pytest.mark.parametrize(
+    "extra", [["-f", "rdfxml"], ["-f", "json-ld"], ["-b", "https://example.edu/c/"]]
+)
+def test_blank_nodes_is_refused_with(capsys, extra):
+    with pytest.raises(SystemExit) as excinfo:
+        main([VERNE_XML, "--blank-nodes", *extra])
+    assert "marc-bibframe:" in str(excinfo.value)
 
 
 def test_writes_to_a_file(tmp_path, capsys):
@@ -132,3 +154,41 @@ def test_empty_input_is_an_error(tmp_path):
 )
 def test_looks_like_marcxml(data, expected):
     assert looks_like_marcxml(data) is expected
+
+
+@pytest.mark.parametrize("extra", [[], ["-f", "turtle"], ["-f", "ttl"]])
+def test_blank_nodes_is_refused_as_turtle(capsys, extra):
+    """rdflib's Turtle writer garbles lists of blank nodes; turtle is the default."""
+    with pytest.raises(SystemExit) as excinfo:
+        main([VERNE_XML, "--blank-nodes", *extra])
+    assert "marc-bibframe:" in str(excinfo.value)
+    assert "-f nt" in str(excinfo.value)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="rdflib's Turtle writer can write a list cell twice when the list "
+    "hangs off a blank node cycle (https://github.com/RDFLib/rdflib/issues/3736)",
+)
+def test_rdflib_turtle_writes_a_list_cell_once():
+    """When this passes, --blank-nodes can stop refusing turtle.
+
+    The labels are fixed because whether rdflib gets it wrong depends on them.
+    """
+    from rdflib import RDF, BNode, Graph, Literal, URIRef
+
+    p = URIRef("http://example.org/p")
+    x, y, l1, l2 = BNode("b"), BNode("c"), BNode("d"), BNode("a")
+    graph = Graph()
+    for triple in [
+        (x, p, y),
+        (y, p, x),
+        (x, p, l1),
+        (l1, RDF.first, Literal("a")),
+        (l1, RDF.rest, l2),
+        (l2, RDF.first, Literal("b")),
+        (l2, RDF.rest, RDF.nil),
+    ]:
+        graph.add(triple)
+    turtle = graph.serialize(format="turtle")
+    assert len(Graph().parse(data=turtle, format="turtle")) == 7

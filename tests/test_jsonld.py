@@ -45,7 +45,7 @@ def test_a_single_record_is_the_instance_itself(verne_marcxml):
 
     assert instance["@context"] == bibframe_json.CONTEXT_URL
     assert "@graph" not in instance
-    assert instance["@id"] == "http://example.org/99123456#Instance"
+    assert instance["@id"] == "urn:x-marc-bibframe:99123456#Instance"
     assert instance["@type"] == ["Instance"]
 
 
@@ -55,7 +55,7 @@ def test_the_work_is_embedded_where_instance_of_reaches_it(verne_marcxml):
     work = instance["instanceOf"][0]
 
     assert isinstance(work, dict)  # embedded, not the bare URI a linked one holds
-    assert work["@id"] == "http://example.org/99123456#Work"
+    assert work["@id"] == "urn:x-marc-bibframe:99123456#Work"
     assert "Work" in work["@type"]
 
 
@@ -178,3 +178,41 @@ def test_a_graph_with_no_instance_is_refused():
 
     with pytest.raises(ValueError, match="no bf:Instance"):
         bounded_document(Graph())
+
+
+def test_blank_nodes_are_refused(verne_marcxml, verne_marc):
+    """A bounded description needs an @id on the Instance and its Work."""
+    with pytest.raises(ValueError, match="bounded"):
+        marcxml_to_jsonld(verne_marcxml, blank_nodes=True)
+    with pytest.raises(ValueError, match="bounded"):
+        marc_to_jsonld(verne_marc, blank_nodes=True)
+
+
+def test_the_blank_nodes_refusal_points_away_from_rdflib_json_ld(verne_marcxml):
+    """Before rdflib 8, its JSON-LD writer drops a blank Work and Instance."""
+    with pytest.raises(ValueError) as excinfo:
+        marcxml_to_jsonld(verne_marcxml, blank_nodes=True)
+    assert 'serialize(format="json-ld")' not in str(excinfo.value)
+    assert "N-Triples" in str(excinfo.value)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="rdflib's JSON-LD writer drops blank nodes that only reference each "
+    "other until rdflib 8 (https://github.com/RDFLib/rdflib/pull/3679)",
+)
+def test_rdflib_json_ld_keeps_a_blank_node_cycle():
+    """When this passes, require rdflib 8 and drop the pyld workaround.
+
+    _jsonld.expanded, and so -f json-ld-expanded, use pyld only because of it.
+    """
+    from rdflib import Graph
+
+    ttl = """
+        @prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+        _:work a bf:Work ; bf:hasInstance _:instance .
+        _:instance a bf:Instance ; bf:instanceOf _:work .
+    """
+    graph = Graph().parse(data=ttl, format="turtle")
+    jsonld = graph.serialize(format="json-ld")
+    assert len(Graph().parse(data=jsonld, format="json-ld")) == 4

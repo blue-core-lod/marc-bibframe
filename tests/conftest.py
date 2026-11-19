@@ -30,6 +30,12 @@ def series_marcxml() -> str:
 
 
 @pytest.fixture
+def headings_marcxml() -> str:
+    """Headings with and without a $0, the record behind issue #11."""
+    return (FIXTURES / "headings.xml").read_text()
+
+
+@pytest.fixture
 def verne_bibframe() -> bytes:
     """Verne converted to BIBFRAME RDF/XML, with the datestamp pinned."""
     return (FIXTURES / "verne-bibframe.xml").read_bytes()

@@ -88,8 +88,14 @@ def _without_blank_ids(node: Any) -> Any:
     }
 
 
-def _expanded(graph: Graph) -> Any:
+def expanded(graph: Graph) -> Any:
     """The graph as expanded JSON-LD, the form framing reads.
+
+    pyld rather than rdflib's own JSON-LD serializer, which before rdflib 8
+    drops blank nodes that only refer to each other, such as a blank Work and
+    its Instance: https://github.com/RDFLib/rdflib/pull/3679. Once we can
+    require rdflib 8, which is not released yet, this can go back to rdflib;
+    test_rdflib_json_ld_keeps_a_blank_node_cycle starts failing to say so.
 
     N-Triples rather than N-Quads: rdflib only writes N-Quads for a
     context-aware store, and there are no named graphs here for it to lose.
@@ -114,7 +120,7 @@ def bounded_document(graph: Graph) -> dict[str, Any]:
         )
 
     framed = jsonld.frame(
-        _expanded(graph),
+        expanded(graph),
         {
             "@context": bibframe_json.context()["@context"],
             "@type": str(_INSTANCE),
@@ -136,8 +142,8 @@ def bounded_document(graph: Graph) -> dict[str, Any]:
     return document
 
 
-def dumps(document: dict[str, Any]) -> bytes:
-    """A bounded document as UTF-8 JSON, indented for reading.
+def dumps(document: dict[str, Any] | list[Any]) -> bytes:
+    """A JSON-LD document as UTF-8 JSON, indented for reading.
 
     Not ASCII-escaped: BIBFRAME is full of non-Latin script, and escaping it
     makes a readable format unreadable for no gain.
