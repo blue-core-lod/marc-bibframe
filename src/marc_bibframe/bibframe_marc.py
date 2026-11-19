@@ -281,8 +281,9 @@ def _sniff(data: bytes) -> str:
     if head.startswith(b"<"):
         # N-Triples opens with a < too, but on a full URI in angle brackets
         # rather than an element name, and an element name cannot hold a "://".
+        # A urn: has no "://", and marc-bibframe mints under one by default.
         end = head.find(b">")
-        if end > 0 and b"://" in head[1:end]:
+        if end > 0 and (b"://" in head[1:end] or head.startswith(b"<urn:")):
             return "ntriples"
         return "rdfxml"
     if head.startswith((b"{", b"[")):

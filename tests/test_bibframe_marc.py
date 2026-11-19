@@ -14,6 +14,7 @@ from marc_bibframe import (
     bibframe_marc,
     bibframe_to_marc,
     bibframe_to_marcxml,
+    marcxml_to_graph,
     marcxml_to_rdfxml,
     upstream,
 )
@@ -558,3 +559,16 @@ def test_live_authority_lookup(verne_bibframe):
         verne_bibframe, generation_datestamp="20260101000000.0"
     )
     assert subfields(field(marcxml, "655"))[0] == ("a", "Fiction")
+
+
+def test_ntriples_opening_on_a_urn_are_detected(verne_marcxml, offline_kwargs):
+    """A urn: has no "://", which is how the sniffer told N-Triples from XML.
+
+    marc-bibframe mints under urn:x-marc-bibframe: by default, so its N-Triples
+    open on one about half the time, whichever line rdflib writes first.
+    """
+    graph = marcxml_to_graph(verne_marcxml)
+    lines = graph.serialize(format="nt").splitlines()
+    lines.sort(key=lambda line: not line.startswith("<urn:"))
+    marcxml = bibframe_to_marcxml("\n".join(lines).encode(), **offline_kwargs)
+    assert b"Twenty thousand leagues" in marcxml

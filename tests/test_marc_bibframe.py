@@ -86,9 +86,10 @@ def test_baseuri_is_used_for_minted_uris(verne_marcxml):
     assert str(agent(graph)).startswith("https://example.edu/catalog/99123456#")
 
 
-def test_baseuri_defaults_to_the_stylesheet_default(verne_marcxml):
+def test_baseuri_defaults_to_a_urn(verne_marcxml):
     graph = marcxml_to_graph(verne_marcxml)
-    assert str(agent(graph)).startswith(DEFAULT_BASE_URI)
+    assert DEFAULT_BASE_URI == "urn:x-marc-bibframe:"
+    assert str(agent(graph)).startswith("urn:x-marc-bibframe:99123456#")
 
 
 def test_minted_uris_are_scoped_to_the_record(verne_marcxml):

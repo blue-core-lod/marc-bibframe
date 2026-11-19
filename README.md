@@ -39,7 +39,7 @@ description rather than rdflib's own JSON: the document is the `bf:Instance`,
 the Work it instantiates is embedded where `instanceOf` reaches it, and every
 property is an array so a reader can loop without checking. A collection
 becomes a `@graph` of Instances, in Instance order. `json-ld-expanded` is
-rdflib's flat array of nodes, for anyone who wants the RDF dump. `rdfxml` is
+the flat array of expanded nodes, for anyone who wants the RDF dump. `rdfxml` is
 the stylesheet's own output passed through without a parse into rdflib, which
 is faster and keeps the transform's exact shape.
 
@@ -100,11 +100,23 @@ from, so two records describing the same person produce two different agent
 URIs. If you need them reconciled against an authority (LC, Wikidata, your
 own store) that happens after this library hands you the graph.
 
-For the same reason the default `baseuri` is `http://example.org/`, matching
-the stylesheet's own. Pick something under your control, and prefer a
+For the same reason the default `baseuri` is `urn:x-marc-bibframe:` rather
+than the stylesheet's own `http://example.org/`, which looks like a web address
+that resolves. Pick something under your control, and prefer a
 namespace that cannot be mistaken for an authority's: minting
 `http://id.loc.gov/resources/99123456#Agent100-3` produces URIs that look like
 LC's but are not.
+
+If you would rather have no minted URIs at all, pass `blank_nodes=True` to
+`marcxml_to_graph` or `marc_to_graph` (`--blank-nodes` on the command line).
+Everything above is then a blank node, the Work and Instance included, with its
+description intact. This suits a store that mints URIs of its own for new
+resources, as Blue Core does. It works only with the default `baseuri`, and the
+bounded `json-ld` functions and `--format rdfxml` refuse it: a bounded
+description needs an `@id` on the Instance and the Work, and `rdfxml` is the
+stylesheet's own output. Write the graph as N-Triples or RDF/XML (`-f nt`,
+`-f xml` or `-f json-ld-expanded`): rdflib's Turtle and JSON-LD writers mangle
+graphs like these, so `--blank-nodes` refuses Turtle, the default, as well.
 
 # BIBFRAME to MARC
 

@@ -13,18 +13,21 @@ from marc_bibframe import (
     upstream,
 )
 from marc_bibframe._cli import read_input, write_output
+from marc_bibframe._jsonld import dumps, expanded
 
 #: rdflib's name for each output, except where the output does not come from
 #: rdflib at all. json-ld is a bibframe-json bounded document and rdfxml is
 #: served from the transform directly rather than round-tripped through a
-#: parse; json-ld-expanded is rdflib's own flat array of expanded nodes, kept
-#: for anyone who wants the RDF dump rather than the readable shape.
+#: parse; json-ld-expanded is the flat array of expanded nodes, kept for anyone
+#: who wants the RDF dump rather than the readable shape, and written by pyld
+#: because rdflib's loses blank nodes before rdflib 8 (rdflib PR 3679), which
+#: is not released yet.
 FORMATS = {
     "turtle": "turtle",
     "ttl": "turtle",
     "json-ld": "bibframe-json",
     "jsonld": "bibframe-json",
-    "json-ld-expanded": "json-ld",
+    "json-ld-expanded": "json-ld-expanded",
     "ntriples": "nt",
     "nt": "nt",
     "xml": "xml",
@@ -33,6 +36,7 @@ FORMATS = {
 
 #: The values in :data:`FORMATS` that are not rdflib format strings.
 BIBFRAME_JSON = "bibframe-json"
+EXPANDED_JSON = "json-ld-expanded"
 RDFXML = "rdfxml"
 
 
@@ -65,7 +69,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=sorted(FORMATS),
         help="output serialization (default: turtle). json-ld is the "
         "bibframe-json shape, one Instance per record and the Work embedded; "
-        "json-ld-expanded is rdflib's flat array of nodes; rdfxml is the "
+        "json-ld-expanded is the flat array of expanded nodes; rdfxml is the "
         "stylesheet's own output, passed through unparsed",
     )
     parser.add_argument(
@@ -75,6 +79,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         metavar="URI",
         help="base for the URIs the transform mints, which are NOT authority "
         f"URIs -- see the README (default: {DEFAULT_BASE_URI})",
+    )
+    parser.add_argument(
+        "--blank-nodes",
+        action="store_true",
+        help="describe the resources MARC does not identify (the work and "
+        "instance, hubs, items, headings without a $0) as blank nodes rather "
+        "than by minted URIs. Only with -f nt, -f xml or -f json-ld-expanded, "
+        "and not with --baseuri",
     )
     parser.add_argument(
         "--idfield",
@@ -132,14 +144,37 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     target = FORMATS[args.format]
+    blank = args.blank_nodes
     if target == RDFXML:
+        if blank:
+            raise SystemExit(
+                "marc-bibframe: --blank-nodes needs a format rdflib writes, not rdfxml"
+            )
         out = marcxml_to_rdfxml(marcxml, **params)
-    elif target == BIBFRAME_JSON:
-        out = marcxml_to_jsonld(marcxml, **params)
-    else:
-        out = marcxml_to_graph(marcxml, **params).serialize(
-            format=target, encoding="utf-8"
+    elif blank and target == "turtle":
+        # rdflib's Turtle writer can write a list cell twice in these graphs
+        # (https://github.com/RDFLib/rdflib/issues/3736), and turtle is the
+        # default, so say which formats do work. When rdflib fixes it,
+        # test_rdflib_turtle_writes_a_list_cell_once starts failing.
+        raise SystemExit(
+            "marc-bibframe: --blank-nodes cannot be written as turtle, which "
+            "rdflib garbles for lists of blank nodes; use -f nt, -f xml or "
+            "-f json-ld-expanded"
         )
+    else:
+        try:
+            if target == BIBFRAME_JSON:
+                out = marcxml_to_jsonld(marcxml, blank_nodes=blank, **params)
+            elif target == EXPANDED_JSON:
+                out = dumps(
+                    expanded(marcxml_to_graph(marcxml, blank_nodes=blank, **params))
+                )
+            else:
+                out = marcxml_to_graph(marcxml, blank_nodes=blank, **params).serialize(
+                    format=target, encoding="utf-8"
+                )
+        except ValueError as error:
+            raise SystemExit(f"marc-bibframe: {error}") from error
 
     write_output(out, args.output)
     return 0
