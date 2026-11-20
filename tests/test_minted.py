@@ -55,7 +55,15 @@ def heading(graph: Graph, predicate: URIRef, label: str) -> BNode:
 
 
 def test_only_the_work_instance_and_hubs_keep_minted_uris(graph):
-    assert minted(graph) == {"Work", "Instance", "Hub240-11", "Hub240-11-Agent"}
+    assert minted(graph) == {"Work", "Instance", "Hub240-11"}
+
+
+def test_the_hub_agent_is_a_blank_node_that_keeps_its_marckey(graph):
+    hub = URIRef(f"{RECORD}#Hub240-11")
+    agent = graph.value(graph.value(hub, BF.contribution), BF.agent)
+    assert isinstance(agent, BNode)
+    assert graph.value(agent, RDFS.label) == Literal("Argus (Science fiction writer)")
+    assert graph.value(agent, URIRef("http://id.loc.gov/ontologies/bflc/marcKey"))
 
 
 @pytest.mark.parametrize(
@@ -133,6 +141,7 @@ def test_mint_default_uris_keeps_the_stylesheet_uris(headings_marcxml):
         "Temporal648-21",
         "Place651-29",
         "Place662-36",
+        "Hub240-11-Agent",
     } <= minted(graph)
 
 
@@ -148,7 +157,6 @@ def test_follows_the_baseuri_in_use(headings_marcxml):
         "Work",
         "Instance",
         "Hub240-11",
-        "Hub240-11-Agent",
     }
 
 
@@ -161,6 +169,7 @@ def test_follows_the_baseuri_in_use(headings_marcxml):
         ("http://id.loc.gov/resources/works/123456", False),
         ("http://id.loc.gov/resources99123456#Work", False),
         ("http://id.loc.gov/resources99123456#Hub240-6", False),
+        ("http://id.loc.gov/resources99123456#Hub240-6-Agent", True),
         ("http://id.loc.gov/resources99123456#Topic650-6-Agent", False),
         ("http://id.loc.gov/authorities/subjects/sh85021262", False),
     ],

@@ -114,6 +114,7 @@ label, source and marcKey stay with the heading:
     bf:source <http://id.loc.gov/authorities/subjects> ] .
 ```
 
+The agent of a uniform-title Hub (`#Hub240-11-Agent`) is a blank node too.
 The Work, Instance, Hubs, the related Works and Instances of the linking
 fields, and Items keep their minted URIs, and a heading with a `$0` URI keeps
 that URI. Pass `mint_default_uris=True` (`--mint-default-uris` on the command

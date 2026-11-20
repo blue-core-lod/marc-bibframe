@@ -149,7 +149,8 @@ def marcxml_to_graph(
         no URI in its $0 is otherwise described by a blank node -- Agents,
         Topics, GenreForms, Events, Temporals and Places -- with its label,
         source and marcKey on it, rather than by a record-scoped
-        ``{baseuri}{record id}#Topic650-6`` that names nothing. The Work,
+        ``{baseuri}{record id}#Topic650-6`` that names nothing. So is the
+        agent of a uniform-title Hub (``#Hub240-11-Agent``). The Work,
         Instance, Hubs, related Works and Instances, and Items keep their
         minted URIs either way.
     """

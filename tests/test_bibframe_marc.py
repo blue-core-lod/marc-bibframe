@@ -412,6 +412,20 @@ def test_the_format_is_guessed_when_unset(
     assert guessed == striped
 
 
+@pytest.mark.parametrize(
+    ("head", "expected"),
+    [
+        (b"<urn:folio:stanford:99123456#Work> <http://x/p> <http://x/o> .", "ntriples"),
+        (b"<http://example.org/1#Work> <http://x/p> <http://x/o> .", "ntriples"),
+        (b'<?xml version="1.0"?><rdf:RDF/>', "rdfxml"),
+        (b"<rdf:RDF/>", "rdfxml"),
+    ],
+)
+def test_n_triples_on_a_urn_subject_is_not_taken_for_rdfxml(head, expected):
+    """A urn: baseuri, like the FOLIO DAG's urn:folio:, mints URIs with no "://"."""
+    assert bibframe_marc._sniff(head) == expected
+
+
 def test_a_graph_can_be_handed_over_directly(
     verne_bibframe, verne_graph, offline_kwargs
 ):
