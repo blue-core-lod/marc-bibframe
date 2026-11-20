@@ -77,6 +77,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         f"URIs -- see the README (default: {DEFAULT_BASE_URI})",
     )
     parser.add_argument(
+        "--mint-default-uris",
+        action="store_true",
+        help="keep the URIs the transform mints for name, subject and "
+        "genre/form headings that have no $0, instead of describing them as "
+        "blank nodes. -f rdfxml always keeps them, being the stylesheet's own "
+        "output",
+    )
+    parser.add_argument(
         "--idfield",
         metavar="FIELD",
         help="MARC field holding the record id, 001 by default. Suffix a "
@@ -132,12 +140,13 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     target = FORMATS[args.format]
+    mint = args.mint_default_uris
     if target == RDFXML:
         out = marcxml_to_rdfxml(marcxml, **params)
     elif target == BIBFRAME_JSON:
-        out = marcxml_to_jsonld(marcxml, **params)
+        out = marcxml_to_jsonld(marcxml, mint_default_uris=mint, **params)
     else:
-        out = marcxml_to_graph(marcxml, **params).serialize(
+        out = marcxml_to_graph(marcxml, mint_default_uris=mint, **params).serialize(
             format=target, encoding="utf-8"
         )
 

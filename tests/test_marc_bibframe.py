@@ -1,6 +1,7 @@
 import pytest
-from rdflib import RDF, RDFS, Graph, Literal, Namespace, URIRef
+from rdflib import RDF, RDFS, Graph, Literal, Namespace
 from rdflib.compare import isomorphic
+from rdflib.term import Node
 
 from marc_bibframe import (
     DEFAULT_BASE_URI,
@@ -17,13 +18,11 @@ BFLC = Namespace("http://id.loc.gov/ontologies/bflc/")
 VERNE = "Verne, Jules, 1828-1905"
 
 
-def agent(graph: Graph) -> URIRef:
-    """The one bf:Person in the graph."""
+def agent(graph: Graph) -> Node:
+    """The one bf:Person in the graph: a blank node, or a URI if minted."""
     people = list(graph.subjects(RDF.type, BF.Person))
     assert len(people) == 1
-    person = people[0]
-    assert isinstance(person, URIRef)
-    return person
+    return people[0]
 
 
 def test_marc_to_marcxml(verne_marc):
@@ -75,26 +74,31 @@ def test_marcxml_to_graph(verne_marcxml):
 
 def test_marc_to_graph_matches_the_two_step_route(verne_marc, verne_marcxml):
     """marc_to_graph is just marc_to_marcxml piped into marcxml_to_graph."""
-    direct = marc_to_graph(verne_marc)
-    stepwise = marcxml_to_graph(verne_marcxml)
+    # Minted, so that the agent is the same node in both graphs
+    direct = marc_to_graph(verne_marc, mint_default_uris=True)
+    stepwise = marcxml_to_graph(verne_marcxml, mint_default_uris=True)
     assert len(direct) == len(stepwise)
     assert (agent(direct), RDFS.label, Literal(VERNE)) in stepwise
 
 
 def test_baseuri_is_used_for_minted_uris(verne_marcxml):
-    graph = marcxml_to_graph(verne_marcxml, baseuri="https://example.edu/catalog/")
+    graph = marcxml_to_graph(
+        verne_marcxml, baseuri="https://example.edu/catalog/", mint_default_uris=True
+    )
     assert str(agent(graph)).startswith("https://example.edu/catalog/99123456#")
 
 
 def test_baseuri_defaults_to_the_stylesheet_default(verne_marcxml):
-    graph = marcxml_to_graph(verne_marcxml)
+    graph = marcxml_to_graph(verne_marcxml, mint_default_uris=True)
     assert str(agent(graph)).startswith(DEFAULT_BASE_URI)
 
 
 def test_minted_uris_are_scoped_to_the_record(verne_marcxml):
     """The same person in two records gets two URIs -- see the README."""
     other = verne_marcxml.replace("99123456", "99999999")
-    assert agent(marcxml_to_graph(verne_marcxml)) != agent(marcxml_to_graph(other))
+    assert agent(marcxml_to_graph(verne_marcxml, mint_default_uris=True)) != agent(
+        marcxml_to_graph(other, mint_default_uris=True)
+    )
 
 
 def test_agent_carries_a_marckey_for_reconciling(verne_marcxml):
@@ -112,7 +116,7 @@ def test_idfield_selects_the_record_id(verne_marcxml):
         '<subfield code="a">(OCoLC)ocm12345</subfield>'
         '</datafield><datafield tag="100"',
     )
-    graph = marcxml_to_graph(tagged, idfield="035a")
+    graph = marcxml_to_graph(tagged, idfield="035a", mint_default_uris=True)
     assert "OCoLC" in str(agent(graph))
 
 

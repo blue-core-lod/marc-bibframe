@@ -20,6 +20,7 @@ from pymarc.marcxml import record_to_xml
 from rdflib import Graph
 
 from marc_bibframe._jsonld import bounded_document, dumps
+from marc_bibframe._minted import blank_default_uris
 from marc_bibframe._xslt import (
     COLLECTION_CLOSE,
     COLLECTION_OPEN,
@@ -56,6 +57,8 @@ __all__ = [
 #: The stylesheet's own default. It is deliberately non-resolvable: URIs the
 #: transform mints for entities that MARC does not identify (agents, topics,
 #: the work and instance themselves) are built from it, and they name nothing.
+#: The graph and JSON-LD functions turn the ones minted for headings into blank
+#: nodes unless asked not to, see :func:`marcxml_to_graph`.
 DEFAULT_BASE_URI = "http://example.org/"
 
 
@@ -96,7 +99,9 @@ def marcxml_to_rdfxml(
         ``{baseuri}{record id}#{fragment}``, so they are scoped to the record
         they came from and are not authority URIs -- two records describing the
         same person yield two different agent URIs. Reconciling them against an
-        authority is the caller's job.
+        authority is the caller's job. This function returns the stylesheet's
+        output as it is, minted heading URIs included; the graph and JSON-LD
+        functions make blank nodes of those, see :func:`marcxml_to_graph`.
     idfield
         MARC field holding the record id, ``001`` by default. Suffix a subfield
         code to use one, e.g. ``035a``.
@@ -131,20 +136,37 @@ def marcxml_to_rdfxml(
     )
 
 
-def marcxml_to_graph(marcxml: str | bytes, **kwargs: Any) -> Graph:
+def marcxml_to_graph(
+    marcxml: str | bytes, *, mint_default_uris: bool = False, **kwargs: Any
+) -> Graph:
     """Transform MARCXML into BIBFRAME as an rdflib Graph.
 
-    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+    Takes the keyword arguments of :func:`marcxml_to_rdfxml`, and one more:
+
+    mint_default_uris
+        Keep the URIs the stylesheet mints for headings that MARC does not
+        identify, off by default. A name, subject or genre/form heading with
+        no URI in its $0 is otherwise described by a blank node -- Agents,
+        Topics, GenreForms, Events, Temporals and Places -- with its label,
+        source and marcKey on it, rather than by a record-scoped
+        ``{baseuri}{record id}#Topic650-6`` that names nothing. So is the
+        agent of a uniform-title Hub (``#Hub240-11-Agent``). The Work,
+        Instance, Hubs, related Works and Instances, and Items keep their
+        minted URIs either way.
     """
     graph = Graph()
     graph.parse(data=marcxml_to_rdfxml(marcxml, **kwargs), format="xml")
+    if not mint_default_uris:
+        # None is dropped by xslt_params, so the stylesheet's default applies
+        baseuri = kwargs.get("baseuri")
+        blank_default_uris(graph, DEFAULT_BASE_URI if baseuri is None else baseuri)
     return graph
 
 
 def marc_to_graph(marc: bytes | BinaryIO, **kwargs: Any) -> Graph:
     """Convert binary MARC21 straight to BIBFRAME as an rdflib Graph.
 
-    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+    Takes the same keyword arguments as :func:`marcxml_to_graph`.
     """
     return marcxml_to_graph(marc_to_marcxml(marc), **kwargs)
 
@@ -152,7 +174,7 @@ def marc_to_graph(marc: bytes | BinaryIO, **kwargs: Any) -> Graph:
 def marcxml_to_jsonld(marcxml: str | bytes, **kwargs: Any) -> bytes:
     """Transform MARCXML into BIBFRAME as a bibframe-json document.
 
-    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+    Takes the same keyword arguments as :func:`marcxml_to_graph`.
 
     These bytes are the *bounded description* that
     https://bibframe-json.org defines: the document is the ``bf:Instance``, the
@@ -172,6 +194,6 @@ def marcxml_to_jsonld(marcxml: str | bytes, **kwargs: Any) -> bytes:
 def marc_to_jsonld(marc: bytes | BinaryIO, **kwargs: Any) -> bytes:
     """Convert binary MARC21 straight to a bibframe-json document.
 
-    Takes the same keyword arguments as :func:`marcxml_to_rdfxml`.
+    Takes the same keyword arguments as :func:`marcxml_to_graph`.
     """
     return marcxml_to_jsonld(marc_to_marcxml(marc), **kwargs)
