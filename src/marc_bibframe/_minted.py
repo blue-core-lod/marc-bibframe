@@ -24,9 +24,10 @@ from rdflib import BNode, Graph, URIRef
 from rdflib.term import Node
 
 #: The fragment the stylesheet gives a heading it mints a URI for: a name the
-#: stylesheet picks by tag (not the heading's rdf:type), the MARC tag (880 for a linked field) and the field's position in the
-#: record, e.g. ``Agent100-4`` or ``Place651-9``. A uniform-title Hub's agent
-#: is the Hub's fragment with ``-Agent`` on the end, e.g. ``Hub240-11-Agent``.
+#: stylesheet picks by tag (not the heading's rdf:type), the MARC tag (880 for
+#: a linked field) and the field's position in the record, e.g. ``Agent100-4``
+#: or ``Place651-9``. A uniform-title Hub's agent is the Hub's fragment with
+#: ``-Agent`` on the end, e.g. ``Hub240-11-Agent``.
 _HEADING_FRAGMENT = re.compile(
     r"(?:Agent|Topic|GenreForm|Event|Temporal|Place)\d{3}-\d+|Hub\d{3}-\d+-Agent"
 )
