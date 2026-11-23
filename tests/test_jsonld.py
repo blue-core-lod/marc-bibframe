@@ -45,7 +45,7 @@ def test_a_single_record_is_the_instance_itself(verne_marcxml):
 
     assert instance["@context"] == bibframe_json.CONTEXT_URL
     assert "@graph" not in instance
-    assert instance["@id"] == "http://example.org/99123456#Instance"
+    assert instance["@id"] == "urn:x-marc-bibframe:99123456#Instance"
     assert instance["@type"] == ["Instance"]
 
 
@@ -55,7 +55,7 @@ def test_the_work_is_embedded_where_instance_of_reaches_it(verne_marcxml):
     work = instance["instanceOf"][0]
 
     assert isinstance(work, dict)  # embedded, not the bare URI a linked one holds
-    assert work["@id"] == "http://example.org/99123456#Work"
+    assert work["@id"] == "urn:x-marc-bibframe:99123456#Work"
     assert "Work" in work["@type"]
 
 

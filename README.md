@@ -121,8 +121,10 @@ that URI. Pass `mint_default_uris=True` (`--mint-default-uris` on the command
 line) to keep the heading URIs too. `marcxml_to_rdfxml` and `--format rdfxml`
 always keep them, being the stylesheet's own output.
 
-For the same reason the default `baseuri` is `http://example.org/`, matching
-the stylesheet's own. Pick something under your control, and prefer a
+For the same reason the default `baseuri` is `urn:x-marc-bibframe:` rather
+than the stylesheet's own `http://example.org/`, so the URIs that are left
+(`urn:x-marc-bibframe:99123456#Work`) cannot be mistaken for ones that
+resolve. If you pass your own, pick something under your control, and prefer a
 namespace that cannot be mistaken for an authority's: minting
 `http://id.loc.gov/resources/99123456#Agent100-3` produces URIs that look like
 LC's but are not.

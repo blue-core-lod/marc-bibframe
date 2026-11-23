@@ -54,12 +54,14 @@ __all__ = [
     "upstream",
 ]
 
-#: The stylesheet's own default. It is deliberately non-resolvable: URIs the
+#: The base passed to the stylesheet when the caller gives none, in place of its
+#: own http://example.org/. It is deliberately non-resolvable: URIs the
 #: transform mints for entities that MARC does not identify (agents, topics,
-#: the work and instance themselves) are built from it, and they name nothing.
+#: the work and instance themselves) are built from it, and they name nothing,
+#: which a urn: says plainly where an http URI looks like it could resolve.
 #: The graph and JSON-LD functions turn the ones minted for headings into blank
 #: nodes unless asked not to, see :func:`marcxml_to_graph`.
-DEFAULT_BASE_URI = "http://example.org/"
+DEFAULT_BASE_URI = "urn:x-marc-bibframe:"
 
 
 @functools.cache
