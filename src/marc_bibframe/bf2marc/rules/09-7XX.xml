@@ -147,7 +147,7 @@
               <transform><xsl:value-of select="concat(substring-before($relURI,'rwo/agents'), 'authorities/names/', substring-after($relURI,'rwo/agents/'))"/></transform>
             </sf>
           </case>
-          <case test="not(contains($relURI,'example.org')) and not(contains($relURI,'REPLACE')) and not(contains($relURI,'rwo'))">
+          <case test="(not(contains($relURI,'example.org')) and not(contains($relURI,'urn:x-marc-bibframe:'))) and not(contains($relURI,'REPLACE')) and not(contains($relURI,'rwo'))">
             <sf code="0">
               <transform><xsl:value-of select="$relURI" /></transform>
             </sf>
@@ -159,7 +159,7 @@
               <transform><xsl:value-of select="$relURI"/></transform>
             </sf>
           </case>
-          <case test="not(contains($relURI,'example.org')) and not(contains($relURI,'REPLACE')) and not(contains($relURI,'authorities'))">
+          <case test="(not(contains($relURI,'example.org')) and not(contains($relURI,'urn:x-marc-bibframe:'))) and not(contains($relURI,'REPLACE')) and not(contains($relURI,'authorities'))">
             <sf code="1">
               <transform><xsl:value-of select="$relURI" /></transform>
             </sf>
@@ -340,7 +340,7 @@
             <transform><xsl:value-of select="concat(substring-before($relURI,'rwo/agents'), 'authorities/names/', substring-after($relURI,'rwo/agents/'))"/></transform>
           </sf>
         </case>
-        <case test="not(contains($relURI,'example.org')) and 
+        <case test="(not(contains($relURI,'example.org')) and not(contains($relURI,'urn:x-marc-bibframe:'))) and 
           not(contains($relURI,'REPLACE')) and 
           not(contains($relURI,'rwo')) and 
           not(contains($relURI,'id.oclc.org/worldcat/entity/')) and 
@@ -371,7 +371,7 @@
             <transform><xsl:value-of select="$relURI" /></transform>
           </sf>
         </case>
-        <case test="not(contains($relURI,'example.org')) and 
+        <case test="(not(contains($relURI,'example.org')) and not(contains($relURI,'urn:x-marc-bibframe:'))) and 
           not(contains($relURI,'REPLACE')) and 
           not(contains($relURI,'authorities'))">
           <sf code="1">
@@ -1345,7 +1345,7 @@
           <sf code="4">
             <select xpath="../../bf:role/bf:Role/@rdf:about|../../bf:role/@rdf:resource"/>
           </sf>
-          <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and 
+          <sf code="0"><select xpath="@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and 
                                         not(contains(.,'REPLACE')) and 
                                         not(contains(., 'id.oclc.org/worldcat/entity/')) and
                                         not(contains(., 'isni.org/isni/')) and
@@ -1397,7 +1397,7 @@
           </switch>
             <select xpath="ancestor::bf:Hub">
             <sf code="x" repeatable="false" chopPunct="true"><select xpath="bf:identifier/*[local-name()=Issn or rdf:type/@rdf:resource='http://id.loc.gov/ontologies/bibframe/Issn']/rdf:value"/></sf>
-            <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+            <sf code="0"><select xpath="@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
             <sf code="0">
               <select xpath="bf:identifiedBy/bf:Identifier">
                 <transform>
@@ -1548,7 +1548,7 @@
       </switch>
  
       <sf code="2"><select xpath="bf:source/bf:Source/bf:code"/></sf>
-      <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+      <sf code="0"><select xpath="@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
       <sf code="0">
         <select xpath="bf:identifiedBy/bf:Identifier">
           <transform>
@@ -1815,7 +1815,7 @@
           </case>
         </switch>
       </select>
-      <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+      <sf code="0"><select xpath="@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
       <sf code="0">
         <select xpath="bf:identifiedBy/bf:Identifier">
           <transform>
@@ -1876,7 +1876,7 @@
           <sf code="c" chopPunct="true"><select xpath="rdfs:label"/></sf>
         </case>
       </switch>
-      <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+      <sf code="0"><select xpath="@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
       <sf code="0">
         <select xpath="bf:identifiedBy/bf:Identifier">
           <transform>

@@ -148,7 +148,7 @@
       </ind2>
       <sf code="a" repeatable="false"><select xpath="bf:classificationPortion"/></sf>
       <sf code="b" repeatable="false"><select xpath="bf:itemPortion"/></sf>
-      <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org'))]"/></sf>
+      <sf code="0"><select xpath="@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:')))]"/></sf>
       <sf code="0">
         <select xpath="bf:identifiedBy/bf:Identifier">
           <transform>
@@ -198,7 +198,7 @@
       </ind2>
       <sf code="a"><select xpath="bf:classificationPortion"/></sf>
       <sf code="b" repeatable="false"><select xpath="bf:itemPortion"/></sf>
-      <sf code="0"><select xpath="@rdf:about[not(contains(.,'example.org'))]"/></sf>
+      <sf code="0"><select xpath="@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:')))]"/></sf>
       <sf code="0">
         <select xpath="bf:identifiedBy/bf:Identifier">
           <transform>

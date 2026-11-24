@@ -473,7 +473,8 @@
                       (
                         not(*/@rdf:about) or 
                         contains(*/@rdf:about, 'id.loc.gov/entities') or 
-                        contains(*/@rdf:about, 'example') or 
+                        contains(*/@rdf:about, 'example') or
+                        contains(*/@rdf:about, 'urn:x-marc-bibframe:') or
                         contains(*/@rdf:about, 'REPLACE') or 
                         ( contains(*/@rdf:about, 'd-nb.info/') and contains(*/@rdf:about, '#') ) or 
                         contains(*/@rdf:about, 'homosaurus.org/v')
@@ -544,7 +545,7 @@
         <var name="vDollar0Uri">
           <transform>
             <xsl:value-of select="*/@rdf:about[
-                not(contains(.,'example.org')) and 
+                (not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and 
                 not(contains(.,'REPLACE')) and 
                 ( contains(*/@rdf:about, 'd-nb.info/') and not(contains(*/@rdf:about, '#')) )
                 ]"></xsl:value-of>
@@ -626,8 +627,8 @@
         </var>
         <var name="vSharedDollar0s">
           <switch>
-            <case test="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]">
-              <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+            <case test="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]">
+              <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
             </case>
             <case test="*/bf:identifiedBy/bf:Identifier">
               <sf code="0">
@@ -875,7 +876,7 @@
                       (
                       not(@rdf:about) or
                       contains(@rdf:about, 'REPLACE') or 
-                      contains(@rdf:about, 'example')
+                      contains(@rdf:about, 'example') or contains(@rdf:about, 'urn:x-marc-bibframe:')
                       )
                     ]">
                 
@@ -1087,7 +1088,7 @@
                 (
                   not(@rdf:about) or
                   contains(@rdf:about, 'REPLACE') or 
-                  contains(@rdf:about, 'example')
+                  contains(@rdf:about, 'example') or contains(@rdf:about, 'urn:x-marc-bibframe:')
                 )
                 ]">
 
@@ -1273,7 +1274,7 @@
                 (
                 not(@rdf:about) or
                 contains(@rdf:about, 'REPLACE') or 
-                contains(@rdf:about, 'example')
+                contains(@rdf:about, 'example') or contains(@rdf:about, 'urn:x-marc-bibframe:')
                 )
                 ]">
                 
@@ -1445,7 +1446,7 @@
                 (
                 not(@rdf:about) or
                 contains(@rdf:about, 'REPLACE') or 
-                contains(@rdf:about, 'example')
+                contains(@rdf:about, 'example') or contains(@rdf:about, 'urn:x-marc-bibframe:')
                 )
                 ]">
                 
@@ -1547,7 +1548,7 @@
                   </case>
                 </switch>
               </select>
-              <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+              <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
               <sf code="0">
                 <select xpath="*/bf:identifiedBy/bf:Identifier">
                   <transform>
@@ -1696,7 +1697,7 @@
                       </case>
                     </switch>
                   </select>
-                  <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+                  <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
                   <sf code="0">
                     <select xpath="*/bf:identifiedBy/bf:Identifier">
                       <transform>
@@ -1840,7 +1841,7 @@
                       </case>
                     </switch>
                   </select>
-                  <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+                  <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
                   <sf code="0">
                     <select xpath="*/bf:identifiedBy/bf:Identifier">
                       <transform>
@@ -1993,7 +1994,7 @@
                 <xsl:copy-of select="$vSharedDollar2" />
               </transform>
               <!--
-              <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+              <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
               <sf code="0">
                 <select xpath="*/bf:identifiedBy/bf:Identifier">
                   <transform>
@@ -2171,7 +2172,7 @@
                       </case>
                     </switch>
                   </select>
-                  <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+                  <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
                   <sf code="0">
                     <select xpath="*/bf:identifiedBy/bf:Identifier">
                       <transform>
@@ -2213,7 +2214,7 @@
                     <xsl:copy-of select="$vSharedDollar2" />
                   </transform>
                   <!--
-                  <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+                  <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
                   <sf code="0">
                     <select xpath="*/bf:identifiedBy/bf:Identifier">
                       <transform>
@@ -2370,7 +2371,7 @@
                     <xsl:copy-of select="$vSharedDollar2" />
                   </transform>
                   <!--
-                  <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+                  <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
                   <sf code="0">
                     <select xpath="*/bf:identifiedBy/bf:Identifier">
                       <transform>
@@ -2415,7 +2416,7 @@
                     <xsl:copy-of select="$vSharedDollar2" />
                   </transform>
                   <!--
-                  <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+                  <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
                   <sf code="0">
                     <select xpath="*/bf:identifiedBy/bf:Identifier">
                       <transform>
@@ -2643,7 +2644,7 @@
                     ]">
       <var name="relURI">
         <switch>
-          <case test="not(contains(.,'example.org')) and not(contains(bf:*/@rdf:about, 'REPLACE'))"><transform><xsl:value-of select="bf:*/@rdf:about"/></transform></case>
+          <case test="(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(bf:*/@rdf:about, 'REPLACE'))"><transform><xsl:value-of select="bf:*/@rdf:about"/></transform></case>
         </switch>
       </var>
       <var name="vInd2Val">
@@ -2766,7 +2767,7 @@
               </case>
             </switch>
           </select>
-          <sf code="0"><select xpath="*/@rdf:about[not(contains(.,'example.org')) and not(contains(.,'REPLACE'))]"/></sf>
+          <sf code="0"><select xpath="*/@rdf:about[(not(contains(.,'example.org')) and not(contains(.,'urn:x-marc-bibframe:'))) and not(contains(.,'REPLACE'))]"/></sf>
           <sf code="0">
             <select xpath="*/bf:identifiedBy/bf:Identifier">
               <transform>
