@@ -41,7 +41,8 @@ property is an array so a reader can loop without checking. A collection
 becomes a `@graph` of Instances, in Instance order. `json-ld-expanded` is
 rdflib's flat array of nodes, for anyone who wants the RDF dump. `rdfxml` is
 the stylesheet's own output passed through without a parse into rdflib, which
-is faster and keeps the transform's exact shape.
+is faster and keeps the transform's exact shape, minted heading URIs included
+(see [below](#a-note-on-the-uris-it-mints)).
 
 `marc-bibframe --help` lists the stylesheet parameters, which are also
 available as flags.
@@ -81,7 +82,8 @@ jsonld = marcxml_to_jsonld(marcxml)
 All of these accept the stylesheet's parameters as keyword arguments —
 `baseuri`, `idfield`, `idsource`, `localfields`, `bcp47_inference` and
 `generation_datestamp`. See the docstring on `marcxml_to_rdfxml` for what each
-one does.
+one does. The graph and JSON-LD functions also take `mint_default_uris`,
+described below.
 
 ## A note on the URIs it mints
 
@@ -100,8 +102,29 @@ from, so two records describing the same person produce two different agent
 URIs. If you need them reconciled against an authority (LC, Wikidata, your
 own store) that happens after this library hands you the graph.
 
-For the same reason the default `baseuri` is `http://example.org/`, matching
-the stylesheet's own. Pick something under your control, and prefer a
+The ones minted for headings — an Agent, Topic, GenreForm, Event, Temporal or
+Place whose field has no URI in its `$0` — name nothing at all, so the graph
+and JSON-LD functions describe those headings with blank nodes instead. The
+label, source and marcKey stay with the heading:
+
+```turtle
+<https://example.edu/catalog/99123456#Work> bf:subject [
+    a bf:Topic, madsrdf:Topic ;
+    rdfs:label "Science fiction" ;
+    bf:source <http://id.loc.gov/authorities/subjects> ] .
+```
+
+The agent of a uniform-title Hub (`#Hub240-11-Agent`) is a blank node too.
+The Work, Instance, Hubs, the related Works and Instances of the linking
+fields, and Items keep their minted URIs, and a heading with a `$0` URI keeps
+that URI. Pass `mint_default_uris=True` (`--mint-default-uris` on the command
+line) to keep the heading URIs too. `marcxml_to_rdfxml` and `--format rdfxml`
+always keep them, being the stylesheet's own output.
+
+For the same reason the default `baseuri` is `urn:x-marc-bibframe:` rather
+than the stylesheet's own `http://example.org/`, so the URIs that are left
+(`urn:x-marc-bibframe:99123456#Work`) cannot be mistaken for ones that
+resolve. If you pass your own, pick something under your control, and prefer a
 namespace that cannot be mistaken for an authority's: minting
 `http://id.loc.gov/resources/99123456#Agent100-3` produces URIs that look like
 LC's but are not.

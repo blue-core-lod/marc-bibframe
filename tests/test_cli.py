@@ -45,8 +45,8 @@ def test_reads_stdin_by_default(capsys, monkeypatch):
     [
         ("turtle", "@prefix bf:"),
         ("ttl", "@prefix bf:"),
-        ("nt", "<http://example.org/99123456#Work>"),
-        ("ntriples", "<http://example.org/99123456#Work>"),
+        ("nt", "<urn:x-marc-bibframe:99123456#Work>"),
+        ("ntriples", "<urn:x-marc-bibframe:99123456#Work>"),
         ("json-ld", '"@context"'),
         ("jsonld", '"@context"'),
         ("json-ld-expanded", '"@id"'),
@@ -75,7 +75,7 @@ def test_json_ld_is_the_bibframe_json_shape(capsys):
     assert doc["@type"] == ["Instance"]
 
     expanded = run(capsys, VERNE_XML, "-f", "json-ld-expanded")
-    assert '"http://example.org/99123456#Work"' in expanded
+    assert '"urn:x-marc-bibframe:99123456#Work"' in expanded
 
 
 def test_rdfxml_is_the_stylesheet_output_not_a_reserialization(capsys):
